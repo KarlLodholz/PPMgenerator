@@ -27,17 +27,18 @@ void numToPos(const int &num, int &x, int &y, const int &width) {
 }
 
 
-// void nxtColor(Pixel p[][],vector<int nxt,const int &x,const int &y,const int &width,int &red,int &green,int &blue, int &cntr){
-//     if(p[x][y].r == -1)
-//         if(find(nxt.begin(),nxt.end(),posToNum(x,y,width)) == nxt.end())
-//             nxt.push_back(posToNum(x,y-1,width));
-//     else {
-//         red += p[x][y].r;
-//         green += p[x][y].g;
-//         blue += p[x][y].b;
-//         cntr++;
-//     }
-// }
+void nxtColor(Pixel **p,vector<int> &nxt,const int &x,const int &y,const int &width,int &red,int &green,int &blue, int &cntr){
+    if(p[x][y].r == -1){
+        if(find(nxt.begin(),nxt.end(),posToNum(x,y,width)) == nxt.end())
+            nxt.push_back(posToNum(x,y,width));
+    }
+    else {
+        red += p[x][y].r;
+        green += p[x][y].g;
+        blue += p[x][y].b;
+        cntr++;
+    }
+}
 
 // void avgColorSum(Pixel **p, const int &x, const int &y, int &red, int &green, int &blue, int &cntr) {
 
@@ -84,107 +85,30 @@ int main() {
     vector<int> nxt;
     do {
         colorCntr = 0;
-        up = false;
-        down = false;
-        left = false;
-        right = false;
-        if(posX-1>=0)
-            left = true;
-        if(posX+1<width)
-            right = true;
-        if(posY-1>=0)
-            up = true;
-        if(posY+1<height)
-            down = true;
+        
+        //bool determining if the current pixel is within bounds
+        left = posX-1>=0;
+        right = posX+1<width;
+        up = posY-1>=0;
+        down = posY+1<height;
         
         if(up && left)
-            if(p[posX-1][posY-1].r == -1) {
-                if(find(nxt.begin(),nxt.end(),posToNum(posX-1,posY-1,width)) == nxt.end())
-                    nxt.push_back(posToNum(posX-1,posY-1,width));
-            }
-            else {
-                red += p[posX-1][posY-1].r;
-                green += p[posX-1][posY-1].g;
-                blue += p[posX-1][posY-1].b;
-                colorCntr++;
-            }
+            nxtColor(p,nxt,posX-1,posY-1,width,red,green,blue,colorCntr);  
         if(up)
-            if(p[posX][posY-1].r == -1) {
-                    if(find(nxt.begin(),nxt.end(),posToNum(posX,posY-1,width)) == nxt.end())
-                        nxt.push_back(posToNum(posX,posY-1,width));
-            }
-            else {
-                red += p[posX][posY-1].r;
-                green += p[posX][posY-1].g;
-                blue += p[posX][posY-1].b;
-                colorCntr++;
-            }
+            nxtColor(p,nxt,posX,posY-1,width,red,green,blue,colorCntr);
         if(up & right)
-            if(p[posX+1][posY-1].r == -1) {
-                if(find(nxt.begin(),nxt.end(),posToNum(posX+1,posY-1,width)) == nxt.end())
-                    nxt.push_back(posToNum(posX+1,posY-1,width));
-            }
-            else {
-                red += p[posX+1][posY-1].r;
-                green += p[posX+1][posY-1].g;
-                blue += p[posX+1][posY-1].b;
-                colorCntr++;
-            }
+            nxtColor(p,nxt,posX+1,posY-1,width,red,green,blue,colorCntr);   
         if(left)
-            if(p[posX-1][posY].r == -1) {
-                if(find(nxt.begin(),nxt.end(),posToNum(posX-1,posY,width)) == nxt.end())
-                    nxt.push_back(posToNum(posX-1,posY,width));
-            }
-            else {
-                red += p[posX-1][posY].r;
-                green += p[posX-1][posY].g;
-                blue += p[posX-1][posY].b;
-                colorCntr++;
-            }
+            nxtColor(p,nxt,posX-1,posY,width,red,green,blue,colorCntr);  
         if(right)
-            if(p[posX+1][posY].r == -1) {
-                if(find(nxt.begin(),nxt.end(),posToNum(posX+1,posY,width)) == nxt.end())
-                    nxt.push_back(posToNum(posX+1,posY,width));
-            }
-            else {
-                red += p[posX+1][posY].r;
-                green += p[posX+1][posY].g;
-                blue += p[posX+1][posY].b;
-                colorCntr++;
-            }
+            nxtColor(p,nxt,posX+1,posY,width,red,green,blue,colorCntr);  
         if(down & left)
-            if(p[posX-1][posY+1].r == -1) {
-                if(find(nxt.begin(),nxt.end(),posToNum(posX-1,posY+1,width)) == nxt.end())
-                    nxt.push_back(posToNum(posX-1,posY+1,width));
-            }
-            else {
-                red += p[posX-1][posY+1].r;
-                green += p[posX-1][posY+1].g;
-                blue += p[posX-1][posY+1].b;
-                colorCntr++;
-            }
+            nxtColor(p,nxt,posX-1,posY+1,width,red,green,blue,colorCntr);  
         if(down)
-            if(p[posX][posY+1].r == -1) {
-                if(find(nxt.begin(),nxt.end(),posToNum(posX,posY+1,width)) == nxt.end())
-                    nxt.push_back(posToNum(posX,posY+1,width));
-            }
-            else {
-                red += p[posX][posY+1].r;
-                green += p[posX][posY+1].g;
-                blue += p[posX][posY+1].b;
-                colorCntr++;
-            }
+            nxtColor(p,nxt,posX,posY+1,width,red,green,blue,colorCntr);  
         if(down && right)
-            if(p[posX+1][posY+1].r == -1) {
-                if(find(nxt.begin(),nxt.end(),posToNum(posX+1,posY+1,width)) == nxt.end())
-                    nxt.push_back(posToNum(posX+1,posY+1,width));
-            }
-            else {
-                red += p[posX+1][posY+1].r;
-                green += p[posX+1][posY+1].g;
-                blue += p[posX+1][posY+1].b;
-                colorCntr++;
-            }
+            nxtColor(p,nxt,posX+1,posY+1,width,red,green,blue,colorCntr);  
+        
         //get color avgs around pixel
         if(colorCntr){
             red = (red/colorCntr) + (rand()%70-36);
@@ -212,10 +136,10 @@ int main() {
 
         p[posX][posY].setColor(red,green,blue);
 
-        //get next pixel
+        // get next pixel
         // for(int i=0;i<nxt.size();i++)
         //     cout<<nxt[i]<<" ";
-        // cout<<endl;
+        // cout<<"mo"<<endl;
         if(!nxt.empty()) {
             int rando = rand()%nxt.size();
             // cout<<"rando:"<<rando<<" elem:"<<nxt[rando]<<endl;
