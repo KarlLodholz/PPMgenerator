@@ -6,8 +6,6 @@
 #include <algorithm>
 using namespace std;
 
-const int intensity = 1000;
-
 class Pixel {
     public:
         int r,g,b; //should be a number between 0-intennsity
@@ -17,14 +15,12 @@ class Pixel {
 };
 
 int posToNum(const int &x, const int &y, const int &width) {
-    //cout<<"pos-num num:"<<(y*(width)+x)<<" x:"<<x<<" y:"<<y<<endl;
     return (y*(width)+x);
 }
 
 void numToPos(const int &num, int &x, int &y, const int &width) {
     y = (int)(num / (width));
     x = num % (width);
-    //cout<<"num-pos y:"<<y<<" x:"<<x<<"num:"<<num<<endl;
     return;
 }
 
@@ -67,6 +63,29 @@ void demensions(int &x, int &y) {
     return;
 }
 
+void gradiation(int &intensity, int &rRng,int &rOfst,int &gRng,int &gOfst,int &bRng,int &bOfst) {
+    int rh,gh,bh;
+    cout<<"Higher number for more precision (recommended at least 255)\nEnter color intensity:";
+    cin>>intensity;
+    cout<<"Enter a range of the possible fluctuation of color per pixel based on intensity\n";
+    cout<<"Red min: ";
+    cin>>rOfst;
+    cout<<"Red max: ";
+    cin>>rh;
+    cout<<"Green min: ";
+    cin>>gOfst;
+    cout<<"Green max: ";
+    cin>>gh;
+    cout<<"Blue min: ";
+    cin>>bOfst;
+    cout<<"Blue max: ";
+    cin>>bh;
+    rRng = rh-rOfst+1;
+    gRng = gh-gOfst+1;
+    bRng = bh-bOfst+1;
+    return;
+}
+
 void nxtColor(Pixel **p,vector<int> &nxt,const int &x,const int &y,const int &width,int &red,int &green,int &blue, int &cntr){
     if(p[x][y].r == -1){
         if(find(nxt.begin(),nxt.end(),posToNum(x,y,width)) == nxt.end())
@@ -80,33 +99,48 @@ void nxtColor(Pixel **p,vector<int> &nxt,const int &x,const int &y,const int &wi
     }
 }
 
-int main() {
+// void startPix(Pixel **p, vector<int> &nxt) {
+//     int pixNum;
+//     cout<<"Enter number of starting pixels: ";
+//     cin>>pixNum;
+//     pixNum 
+// }
 
+int main() {
+    
     srand(time(NULL)); //init rand seed;
 
     string imgName;
     int width,height;
     int red,green,blue;
-    int rRandMx,rRandSub,gRandMx,gRandSub,bRandMx,bRandSub; //used for gradient control
+    int intensity,rRng,rOfst,gRng,gOfst,bRng,bOfst; //used for gradient control
+
     cout<<"Warning: Entering a name of an existing file will overwrite it!\n";
     cout<<"Enter the name of the img: ";
     cin>>imgName;
     demensions(width,height); //gets user input on demensions and sets them
-    //gradiation(rRandMx,rRandSub,gRandMx,gRandSub,bRandMx,bRandSub); //gets user input on gradient
-    cout<<"Enter red(0-255):";
-    cin>>red;
-    cout<<"Enter green(0-255): ";
-    cin>>green;
-    cout<<"Enter blue(0-255): ";
-    cin>>blue;
-
-    ofstream ppm(imgName+".ppm");
-    ppm<<"P3 "<<width <<" "<<height<<" "<<intensity<<"\n";
+    gradiation(intensity,rRng,rOfst,gRng,gOfst,bRng,bOfst); //gets user input on gradient
 
     Pixel **p = new Pixel*[width];
     for(int i=0;i<width;i++){
         p[i] = new Pixel[height];
     }
+    vector<int> nxt;
+
+    // startPix(p,nxt); //get user input on starting pixels and starts pixels;
+
+    cout<<"Enter red(0-255):";
+    cin>>red;
+    red = (int)red/255*intensity; //converts red to correct color given changing intensity 
+    cout<<"Enter green(0-255): ";
+    cin>>green;
+    green = (int)green/255*intensity; //converts green to correct color given changing intensity 
+    cout<<"Enter blue(0-255): "; 
+    cin>>blue;
+    blue = (int)blue/255*intensity; //converts blue to correct color given changing intensity 
+
+    ofstream ppm(imgName+".ppm");
+    ppm<<"P3 "<<width <<" "<<height<<" "<<intensity<<"\n";
 
     //random starting position
     bool up,down,left,right,last = false;
@@ -118,8 +152,7 @@ int main() {
     posY = rand()%height;
     
     int colorCntr;
-    
-    vector<int> nxt;
+
     do {
         colorCntr = 0;
         
@@ -148,9 +181,9 @@ int main() {
         
         //get color avgs around pixel
         if(colorCntr){
-            red = (red/colorCntr) + (rand()%3-1);
-            green = (green/colorCntr) + (rand()%3-1);
-            blue = (blue/colorCntr) + (rand()%101-50);
+            red = (red/colorCntr) + (rand()%rRng+rOfst);
+            green = (green/colorCntr) + (rand()%gRng+gOfst);
+            blue = (blue/colorCntr) + (rand()%bRng+bOfst);
             if(red > intensity)
                 red = intensity;
             if(red < 0)
@@ -164,9 +197,6 @@ int main() {
             if(blue < 0)
                 blue = 0;
         }
-        // red = rand()%255;
-        // green = rand()%255;
-        // blue = rand()%255;
 
         if(nxt.empty())
             last = true;
