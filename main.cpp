@@ -6,9 +6,11 @@
 #include <algorithm>
 using namespace std;
 
+const int intensity = 1000;
+
 class Pixel {
     public:
-        int r,g,b; //should be a number between 0-255
+        int r,g,b; //should be a number between 0-intennsity
         Pixel(){r=-1;g=-1;b=-1;};
         void setColor(const int &red,const int &green,const int &blue) {r=red;g=green;b=blue;};
         
@@ -26,6 +28,44 @@ void numToPos(const int &num, int &x, int &y, const int &width) {
     return;
 }
 
+void demensions(int &x, int &y) {
+    int answ;
+    cout<<"0:854x480 \n1:1024x576 \n2:1280x720 \n3:1920x1080 \n4:2560x1440 \n5:3840x2160 \n6:custom\nDimensions: ";
+    cin>>answ;
+    switch(answ){
+        case 0:
+            x = 854;
+            y = 480;
+            break;
+        case 1:
+            x = 1024;
+            y = 576;
+            break;
+        case 2:
+            x = 1280;
+            y = 720;
+            break;
+        case 3:
+            x = 1920;
+            y = 1080;
+            break;
+        case 4:
+            x = 2560;
+            y = 1440;
+            break;
+        case 5:
+            x = 3840;
+            y = 2160;
+            break;
+        case 6:
+            cout<<"Enter width: ";
+            cin>>x;
+            cout<<"Enter height: ";
+            cin>>y;
+            break;
+    }
+    return;
+}
 
 void nxtColor(Pixel **p,vector<int> &nxt,const int &x,const int &y,const int &width,int &red,int &green,int &blue, int &cntr){
     if(p[x][y].r == -1){
@@ -40,31 +80,24 @@ void nxtColor(Pixel **p,vector<int> &nxt,const int &x,const int &y,const int &wi
     }
 }
 
-// void avgColorSum(Pixel **p, const int &x, const int &y, int &red, int &green, int &blue, int &cntr) {
-
-//     cout<<"red:"<<p[x][y].r<<" green:"<<green<<" blue:"<<blue<<" cntr:"<<cntr<<endl;
-//     cntr++;
-//     return;
-// }
-
 int main() {
 
     srand(time(NULL)); //init rand seed;
 
     string imgName;
-    int width,height,red,green,blue,intensity=255;
+    int width,height;
+    int red,green,blue;
+    int rRandMx,rRandSub,gRandMx,gRandSub,bRandMx,bRandSub; //used for gradient control
     cout<<"Warning: Entering a name of an existing file will overwrite it!\n";
     cout<<"Enter the name of the img: ";
     cin>>imgName;
-    cout<<"Enter width: ";
-    cin>>width;
-    cout<<"Enter height: ";
-    cin>>height;
-    cout<<"Enter red: ";
+    demensions(width,height); //gets user input on demensions and sets them
+    //gradiation(rRandMx,rRandSub,gRandMx,gRandSub,bRandMx,bRandSub); //gets user input on gradient
+    cout<<"Enter red(0-255):";
     cin>>red;
-    cout<<"Enter green: ";
+    cout<<"Enter green(0-255): ";
     cin>>green;
-    cout<<"Enter blue: ";
+    cout<<"Enter blue(0-255): ";
     cin>>blue;
 
     ofstream ppm(imgName+".ppm");
@@ -74,12 +107,16 @@ int main() {
     for(int i=0;i<width;i++){
         p[i] = new Pixel[height];
     }
-    //Pixel p[width][height];
 
     //random starting position
     bool up,down,left,right,last = false;
-    int posX = rand()%width;
-    int posY = rand()%height;
+    
+    int posX;
+    int posY;
+
+    posX = rand()%width;
+    posY = rand()%height;
+    
     int colorCntr;
     
     vector<int> nxt;
@@ -111,9 +148,9 @@ int main() {
         
         //get color avgs around pixel
         if(colorCntr){
-            red = (red/colorCntr) + (rand()%70-36);
+            red = (red/colorCntr) + (rand()%3-1);
             green = (green/colorCntr) + (rand()%3-1);
-            blue = (blue/colorCntr) + (rand()%70-35);
+            blue = (blue/colorCntr) + (rand()%101-50);
             if(red > intensity)
                 red = intensity;
             if(red < 0)
