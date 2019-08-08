@@ -99,12 +99,95 @@ void nxtColor(Pixel **p,vector<int> &nxt,const int &x,const int &y,const int &wi
     }
 }
 
-// void startPix(Pixel **p, vector<int> &nxt) {
-//     int pixNum;
-//     cout<<"Enter number of starting pixels: ";
-//     cin>>pixNum;
-//     pixNum 
-// }
+void locToPix(Pixel **p,vector<int> &nxt,const int &x,const int &y,const int &width,const int &height,
+    int &red,int &green, int &blue,const int intensity, 
+    const int &rRng,const int &gRng,const int &bRng,const int &rOfst, const int &gOfst, const int &bOfst) {
+    
+    bool left, up, down, right;
+    int colorCntr = 0;
+    
+    //bool determining if the current pixel is within bounds
+    left = x-1>=0;
+    right = x+1<width;
+    up = y-1>=0;
+    down = y+1<height;
+    
+    if(up && left)
+        nxtColor(p,nxt,x-1,y-1,width,red,green,blue,colorCntr);  
+    if(up)
+        nxtColor(p,nxt,x,y-1,width,red,green,blue,colorCntr);
+    if(up & right)
+        nxtColor(p,nxt,x+1,y-1,width,red,green,blue,colorCntr);   
+    if(left)
+        nxtColor(p,nxt,x-1,y,width,red,green,blue,colorCntr);  
+    if(right)
+        nxtColor(p,nxt,x+1,y,width,red,green,blue,colorCntr);  
+    if(down & left)
+        nxtColor(p,nxt,x-1,y+1,width,red,green,blue,colorCntr);  
+    if(down)
+        nxtColor(p,nxt,x,y+1,width,red,green,blue,colorCntr);  
+    if(down && right)
+        nxtColor(p,nxt,x+1,y+1,width,red,green,blue,colorCntr);  
+    
+    //get color avgs around pixel
+    if(colorCntr){
+        red = (red/colorCntr) + (rand()%rRng+rOfst);
+        green = (green/colorCntr) + (rand()%gRng+gOfst);
+        blue = (blue/colorCntr) + (rand()%bRng+bOfst);
+    }
+    if(red > intensity)
+        red = intensity;
+    if(red < 0)
+        red = 0;
+    if(green > intensity)
+        green = intensity;
+    if(green < 0)
+        green = 0;
+    if(blue > intensity)
+        blue = intensity;
+    if(blue < 0)
+        blue = 0;
+
+    p[x][y].setColor(red,green,blue);
+    red = green = blue = 0;
+    return;
+}
+
+void startPix(Pixel **p,vector<int> &nxt,const int &width,const int &height,const int intensity, 
+    const int &rRng,const int &gRng,const int &bRng,const int &rOfst, const int &gOfst, const int &bOfst) {
+    int pixNum,answ,x,y,red,green,blue;
+    cout<<"Must be at least 1.\nEnter number of starting pixels: ";
+    cin>>pixNum;
+
+    for(int i=0;i<pixNum;i++) {
+        cout<<"Pixel "<<i<<"'s color (0-255)\nRed:";
+        cin>>red;
+        red = (int)red/255*intensity; //converts red to correct color given changing intensity 
+        cout<<"Green: ";
+        cin>>green;
+        green = (int)green/255*intensity; //converts green to correct color given changing intensity 
+        cout<<"Blue: "; 
+        cin>>blue;
+        blue = (int)blue/255*intensity; //converts blue to correct color given changing intensity 
+
+        cout<<"0: enter specific location\n1:random location: ";
+        cin>>answ;
+        if(answ) {
+            do {
+                x = rand()%width;
+                y = rand()%height;
+            }while (p[x][y].r!=-1);
+        }
+        else {
+            cout<<"x: ";
+            cin>>x;
+            cout<<"y: ";
+            cin>>y;
+        }
+
+        locToPix(p,nxt,x,y,width,height,red,green,blue,intensity,rRng,gRng,bRng,rOfst,gOfst,bOfst);
+    }
+}
 
 int main() {
     
@@ -127,102 +210,35 @@ int main() {
     }
     vector<int> nxt;
 
-    // startPix(p,nxt); //get user input on starting pixels and starts pixels;
-
-    cout<<"Enter red(0-255):";
-    cin>>red;
-    red = (int)red/255*intensity; //converts red to correct color given changing intensity 
-    cout<<"Enter green(0-255): ";
-    cin>>green;
-    green = (int)green/255*intensity; //converts green to correct color given changing intensity 
-    cout<<"Enter blue(0-255): "; 
-    cin>>blue;
-    blue = (int)blue/255*intensity; //converts blue to correct color given changing intensity 
+    startPix(p,nxt,width,height,intensity,rRng,gRng,bRng,rOfst,gOfst,bOfst); //get user input on starting pixels and starts pixels;
 
     ofstream ppm(imgName+".ppm");
     ppm<<"P3 "<<width <<" "<<height<<" "<<intensity<<"\n";
 
     //random starting position
-    bool up,down,left,right,last = false;
+    bool last = false;
     
-    int posX;
-    int posY;
-
-    posX = rand()%width;
-    posY = rand()%height;
-    
-    int colorCntr;
+    int x;
+    int y;
 
     do {
-        colorCntr = 0;
-        
-        //bool determining if the current pixel is within bounds
-        left = posX-1>=0;
-        right = posX+1<width;
-        up = posY-1>=0;
-        down = posY+1<height;
-        
-        if(up && left)
-            nxtColor(p,nxt,posX-1,posY-1,width,red,green,blue,colorCntr);  
-        if(up)
-            nxtColor(p,nxt,posX,posY-1,width,red,green,blue,colorCntr);
-        if(up & right)
-            nxtColor(p,nxt,posX+1,posY-1,width,red,green,blue,colorCntr);   
-        if(left)
-            nxtColor(p,nxt,posX-1,posY,width,red,green,blue,colorCntr);  
-        if(right)
-            nxtColor(p,nxt,posX+1,posY,width,red,green,blue,colorCntr);  
-        if(down & left)
-            nxtColor(p,nxt,posX-1,posY+1,width,red,green,blue,colorCntr);  
-        if(down)
-            nxtColor(p,nxt,posX,posY+1,width,red,green,blue,colorCntr);  
-        if(down && right)
-            nxtColor(p,nxt,posX+1,posY+1,width,red,green,blue,colorCntr);  
-        
-        //get color avgs around pixel
-        if(colorCntr){
-            red = (red/colorCntr) + (rand()%rRng+rOfst);
-            green = (green/colorCntr) + (rand()%gRng+gOfst);
-            blue = (blue/colorCntr) + (rand()%bRng+bOfst);
-            if(red > intensity)
-                red = intensity;
-            if(red < 0)
-                red = 0;
-            if(green > intensity)
-                green = intensity;
-            if(green < 0)
-                green = 0;
-            if(blue > intensity)
-                blue = intensity;
-            if(blue < 0)
-                blue = 0;
-        }
-
         if(nxt.empty())
             last = true;
-
-        p[posX][posY].setColor(red,green,blue);
-
-        // get next pixel
-        // for(int i=0;i<nxt.size();i++)
-        //     cout<<nxt[i]<<" ";
-        // cout<<"mo"<<endl;
         if(!nxt.empty()) {
             int rando = rand()%nxt.size();
-            // cout<<"rando:"<<rando<<" elem:"<<nxt[rando]<<endl;
-            numToPos(nxt[rando],posX,posY,width); //posX and posY will now point to new position
+            numToPos(nxt[rando],x,y,width); //updates x and y to nxt[rando]
             swap(nxt[rando],nxt[nxt.size()-1]);
             nxt.pop_back();
         }
-        red = green = blue = 0;
+        locToPix(p,nxt,x,y,width,height,red,green,blue,intensity,rRng,gRng,bRng,rOfst,gOfst,bOfst);
     } while(!last);
 
     //printing arr p to ppm
-    for(int y=0;y<height;y++) {
-        for (int x=0;x<width;x++){
-            ppm <<p[x][y].r<<" "
-                <<p[x][y].g<<" "
-                <<p[x][y].b<<" \t";
+    for(int posY=0;posY<height;posY++) {
+        for (int posX=0;posX<width;posX++){
+            ppm <<p[posX][posY].r<<" "
+                <<p[posX][posY].g<<" "
+                <<p[posX][posY].b<<" \t";
         }
         ppm<<"\n";
     }
