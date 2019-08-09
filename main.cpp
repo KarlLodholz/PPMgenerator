@@ -4,6 +4,8 @@
 #include <time.h>
 #include <vector>
 #include <algorithm>
+#include <ctime>
+#include <cstdio>
 using namespace std;
 
 class Pixel {
@@ -65,7 +67,7 @@ void demensions(int &x, int &y) {
 
 void gradiation(int &intensity, int &rRng,int &rOfst,int &gRng,int &gOfst,int &bRng,int &bOfst) {
     int rh,gh,bh;
-    cout<<"Higher number for more precision (recommended at least 255)\nEnter color intensity:";
+    cout<<"Higher number for more precision (recommended at least 255)\nEnter color intensity: ";
     cin>>intensity;
     cout<<"Enter a range of the possible fluctuation of color per pixel based on intensity\n";
     cout<<"Red min: ";
@@ -88,8 +90,10 @@ void gradiation(int &intensity, int &rRng,int &rOfst,int &gRng,int &gOfst,int &b
 
 void nxtColor(Pixel **p,vector<int> &nxt,const int &x,const int &y,const int &width,int &red,int &green,int &blue, int &cntr){
     if(p[x][y].r == -1){
-        if(find(nxt.begin(),nxt.end(),posToNum(x,y,width)) == nxt.end())
+        if(p[x][y].g == -1) {  //if it has been added to nxt
             nxt.push_back(posToNum(x,y,width));
+            p[x][y].g = -2; ////flag to check if it has been added to nxt
+        }
     }
     else {
         red += p[x][y].r;
@@ -111,7 +115,7 @@ void locToPix(Pixel **p,vector<int> &nxt,const int &x,const int &y,const int &wi
     right = x+1<width;
     up = y-1>=0;
     down = y+1<height;
-    
+
     if(up && left)
         nxtColor(p,nxt,x-1,y-1,width,red,green,blue,colorCntr);  
     if(up)
@@ -160,7 +164,7 @@ void startPix(Pixel **p,vector<int> &nxt,const int &width,const int &height,cons
     cin>>pixNum;
 
     for(int i=0;i<pixNum;i++) {
-        cout<<"Pixel "<<i<<"'s color (0-255)\nRed:";
+        cout<<"Pixel "<<i<<"'s color (0-255)\nRed: ";
         cin>>red;
         red = (int)red/255*intensity; //converts red to correct color given changing intensity 
         cout<<"Green: ";
@@ -170,7 +174,7 @@ void startPix(Pixel **p,vector<int> &nxt,const int &width,const int &height,cons
         cin>>blue;
         blue = (int)blue/255*intensity; //converts blue to correct color given changing intensity 
 
-        cout<<"0: enter specific location\n1:random location: ";
+        cout<<"0: specific location\n1: random location\n Answ: ";
         cin>>answ;
         if(answ) {
             do {
@@ -184,13 +188,12 @@ void startPix(Pixel **p,vector<int> &nxt,const int &width,const int &height,cons
             cout<<"y: ";
             cin>>y;
         }
-
         locToPix(p,nxt,x,y,width,height,red,green,blue,intensity,rRng,gRng,bRng,rOfst,gOfst,bOfst);
     }
 }
 
 int main() {
-    
+
     srand(time(NULL)); //init rand seed;
 
     string imgName;
@@ -208,12 +211,16 @@ int main() {
     for(int i=0;i<width;i++){
         p[i] = new Pixel[height];
     }
-    vector<int> nxt;
+    
+    // its one big array of integers because poping is O(n);
+    vector<int> nxt; 
+
+    nxt.reserve(width*height*(8/9));  // 8/9 is the highest possible ratio of next possible pixels to total pixels
 
     startPix(p,nxt,width,height,intensity,rRng,gRng,bRng,rOfst,gOfst,bOfst); //get user input on starting pixels and starts pixels;
 
     ofstream ppm(imgName+".ppm");
-    ppm<<"P3 "<<width <<" "<<height<<" "<<intensity<<"\n";
+    ppm<<"P3 "<<width<<" "<<height<<" "<<intensity<<"\n";
 
     //random starting position
     bool last = false;
@@ -221,8 +228,12 @@ int main() {
     int x;
     int y;
 
+    std::clock_t start;
+    double duration;
+    start = std::clock();
+
     do {
-        if(nxt.empty())
+        if(nxt.empty()) //only happen when nxt has no more pixels that need to be colored.
             last = true;
         if(!nxt.empty()) {
             int rando = rand()%nxt.size();
@@ -242,6 +253,10 @@ int main() {
         }
         ppm<<"\n";
     }
+
+    duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
+
+    std::cout<<"seconds to complete: "<< duration <<'\n';
 
     return 0;
 }
