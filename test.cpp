@@ -1,79 +1,233 @@
-// #include <gtkmm.h>
-
-// int main(int argc, char *argv[]) {
-//     Gtk::Main kit(argc, argv);
-//     Gtk::Window w;
-//     Gtk::Box(Gtk::Orientation orientation = Gtk::ORIENTATION_HORIZONAL, int spacing = 0);
-//     b
-//     Gtk::Button b1("Here's");
-//     Gtk::Button b2("no");
-
-//     w.set_default_size(640,480);
-//     w.set_title("PPM Generator");
-//     w.set_position(Gtk::WIN_POS_CENTER);
-
-//     b1.show();
-//     w.add(b1);
-//     b2.show();
-//     w.add(b2);
-
-//     Gtk::Main::run(w);
-//     return 0;
-// }
-
+#include <iostream>
+#include <fstream>
+#include <time.h>
+#include <vector>
+#include <algorithm>
+#include <ctime>
+#include <cstdio>
 #include <stdlib.h>
 #include <stdio.h>
 #include <gtk/gtk.h>
+#include <gdk/gdk.h>
+//using namespace std;
 
-static GtkWidget *imgName,*xSz,*ySz,*intensity,*rLow,*rHigh,*gLow,*gHigh,*bLow,*bHigh,*x_start,*y_start;
+static GtkWidget *imgName_wdgt,*width_wdgt,*height_wdgt,*intensity_wdgt,*rLow_wdgt,*rHigh_wdgt,*gLow_wdgt,*gHigh_wdgt,*bLow_wdgt,*bHigh_wdgt,*x_start,*y_start,*color_button,*error_output;
 
-void generate(GtkWidget *genBn, gpointer data) {
-    // int num1 = atoi((char *)gtk_entry_get_text(GTK_ENTRY(number1)));
-    // int num2 = atoi((char *)gtk_entry_get_text(GTK_ENTRY(number2)));
+class Pixel {
+    public:
+        int r,g,b; //should be a number between 0-intennsity
+        Pixel(){r=-1;g=-1;b=-1;};
+        void setColor(const int &red,const int &green,const int &blue) {r=red;g=green;b=blue;};
+        
+};
 
-    // char buffer[32];
-    // snprintf(buffer, sizeof(buffer), "result: %d", num1 + num2);
-
-    // gtk_label_set_text(GTK_LABEL(result), buffer);
+int posToNum(const int &x, const int &y, const int &width) {
+    return (y*(width)+x);
 }
 
-// gcc 007_gtk.c -o 007_gtk `pkg-config --cflags gtk+-3.0` `pkg-config --libs gtk+-3.0`
+void numToPos(const int &num, int &x, int &y, const int &width) {
+    y = (int)(num / (width));
+    x = num % (width);
+    return;
+}
+
+void nxtColor(Pixel **p,std::vector<int> &nxt,const int &x,const int &y,const int &width,int &red,int &green,int &blue, int &cntr){
+    if(p[x][y].r == -1){
+        if(p[x][y].g == -1) {  //if it has been added to nxt
+            nxt.push_back(posToNum(x,y,width));
+            p[x][y].g = -2; ////flag to check if it has been added to nxt
+        }
+    }
+    else {
+        red += p[x][y].r;
+        green += p[x][y].g;
+        blue += p[x][y].b;
+        cntr++;
+    }
+}
+
+void locToPix(Pixel **p,std::vector<int> &nxt,const int &x,const int &y,const int &width,const int &height,
+    int &red,int &green, int &blue,const int intensity, 
+    const int &rRng,const int &gRng,const int &bRng,const int &rOfst, const int &gOfst, const int &bOfst) {
+    
+    bool left, up, down, right;
+    int colorCntr = 0;
+    
+    //bool determining if the current pixel is within bounds
+    left = x-1>=0;
+    right = x+1<width;
+    up = y-1>=0;
+    down = y+1<height;
+
+    if(up && left)
+        nxtColor(p,nxt,x-1,y-1,width,red,green,blue,colorCntr);  
+    if(up)
+        nxtColor(p,nxt,x,y-1,width,red,green,blue,colorCntr);
+    if(up & right)
+        nxtColor(p,nxt,x+1,y-1,width,red,green,blue,colorCntr);   
+    if(left)
+        nxtColor(p,nxt,x-1,y,width,red,green,blue,colorCntr);  
+    if(right)
+        nxtColor(p,nxt,x+1,y,width,red,green,blue,colorCntr);  
+    if(down & left)
+        nxtColor(p,nxt,x-1,y+1,width,red,green,blue,colorCntr);  
+    if(down)
+        nxtColor(p,nxt,x,y+1,width,red,green,blue,colorCntr);  
+    if(down && right)
+        nxtColor(p,nxt,x+1,y+1,width,red,green,blue,colorCntr);  
+    
+    //get color avgs around pixel
+    if(colorCntr){
+        red = (red/colorCntr) + (rand()%rRng+rOfst);
+        green = (green/colorCntr) + (rand()%gRng+gOfst);
+        blue = (blue/colorCntr) + (rand()%bRng+bOfst);
+    }
+    if(red > intensity)
+        red = intensity;
+    if(red < 0)
+        red = 0;
+    if(green > intensity)
+        green = intensity;
+    if(green < 0)
+        green = 0;
+    if(blue > intensity)
+        blue = intensity;
+    if(blue < 0)
+        blue = 0;
+
+    p[x][y].setColor(red,green,blue);
+    red = green = blue = 0;
+    return;
+}
+
+void generate(GtkWidget *genBn, gpointer data) {
+    
+    int intensity = atoi((char *)gtk_entry_get_text(GTK_ENTRY(intensity_wdgt)));
+    int rLow = atoi((char *)gtk_entry_get_text(GTK_ENTRY(rLow_wdgt)));
+    int rHigh = atoi((char *)gtk_entry_get_text(GTK_ENTRY(rHigh_wdgt)))-rLow+1;
+    int gLow = atoi((char *)gtk_entry_get_text(GTK_ENTRY(gLow_wdgt)));
+    int gHigh = atoi((char *)gtk_entry_get_text(GTK_ENTRY(gHigh_wdgt)))-gLow+1;
+    int bLow = atoi((char *)gtk_entry_get_text(GTK_ENTRY(bLow_wdgt)));
+    int bHigh = atoi((char *)gtk_entry_get_text(GTK_ENTRY(bHigh_wdgt)))-bLow+1;
+    int x = atoi((char *)gtk_entry_get_text(GTK_ENTRY(x_start)));
+    int y = atoi((char *)gtk_entry_get_text(GTK_ENTRY(y_start)));
+    std::string imgName = gtk_entry_get_text(GTK_ENTRY(imgName_wdgt));
+    int width = atoi((char *)gtk_entry_get_text(GTK_ENTRY(width_wdgt)));
+    int height = atoi((char *)gtk_entry_get_text(GTK_ENTRY(height_wdgt)));
+    bool valid = true;
+    
+    //converts the color button's collor to 3 ints red, green, and blue;
+    GdkRGBA *color = new GdkRGBA();
+    gtk_color_chooser_get_rgba(GTK_COLOR_CHOOSER(color_button), color);
+    std::string temp_color = gdk_rgba_to_string(color);
+    int red = stoi(temp_color.substr(temp_color.find_first_of('(')+1,temp_color.find_first_of(',')-temp_color.find_first_of('(')-1));
+    temp_color = temp_color.substr(temp_color.find_first_of(',')+1,std::string::npos);
+    int green = stoi(temp_color.substr(0,temp_color.find_first_of(',')));
+    temp_color = temp_color.substr(temp_color.find_first_of(',')+1,std::string::npos);
+    int blue = stoi(temp_color.substr(0,temp_color.find_first_of(')')));
+
+    // gtk_label_set_text(GTK_LABEL(error_output),red.c_str());
+    std::cout << red << "," << green << "," << blue << std::endl;
+
+    if(imgName == "") { 
+        valid = false;
+        gtk_label_set_text(GTK_LABEL(error_output),"Missing name of file");
+    }
+    else {
+        if(x < 0 || y < 0){
+            valid = false;
+            gtk_label_set_text(GTK_LABEL(error_output),"Invalid Dimensions");
+        }
+        else {
+            if(x >= width || x < -1 || y < -1 || y >= height) {
+                valid = false;
+                gtk_label_set_text(GTK_LABEL(error_output),"Invalid Starting position");
+            }
+        }
+    }
+
+    if(valid) {
+        srand(time(NULL)); //init rand seed;
+
+        Pixel **p = new Pixel*[width];
+        for(int i=0;i<width;i++){
+            p[i] = new Pixel[height];
+        }
+        
+        // its one big array of integers because poping is O(n);
+        std::vector<int> nxt; 
+
+        nxt.reserve(width*height*(8/9));  // 8/9 is the highest possible ratio of next possible pixels to total pixels
+
+        //startPix(p,nxt,width,height,intensity,rRng,gRng,bRng,rOfst,gOfst,bOfst); //get user input on starting pixels and starts pixels;
+
+        std::ofstream ppm(imgName+".ppm");
+        ppm<<"P3 "<<width<<" "<<height<<" "<<intensity<<"\n";
+
+        //random starting position
+        bool last = false;
+        locToPix(p,nxt,x,y,width,height,red,green,blue,intensity,rHigh,gHigh,bHigh,rLow,gLow,bLow);
+        do {
+            if(nxt.empty()) //only happen when nxt has no more pixels that need to be colored.
+                last = true;
+            if(!nxt.empty()) {
+                int rando = rand()%nxt.size();
+                numToPos(nxt[rando],x,y,width); //updates x and y to nxt[rando]
+                std::swap(nxt[rando],nxt[nxt.size()-1]);
+                nxt.pop_back();
+            }
+            locToPix(p,nxt,x,y,width,height,red,green,blue,intensity,rHigh,gHigh,bHigh,rLow,gLow,bLow);
+        } while(!last);
+
+        //printing arr p to ppm
+        for(int posY=0;posY<height;posY++) {
+            for (int posX=0;posX<width;posX++){
+                ppm <<p[posX][posY].r<<" "
+                    <<p[posX][posY].g<<" "
+                    <<p[posX][posY].b<<" \t";
+            }
+            ppm<<"\n";
+        }
+    }
+
+}
+
+// gcc test.cpp -o test `pkg-config --cflags gtk+-3.0` `pkg-config --libs gtk+-3.0`
 int main(int argc, char **argv) {
-    GtkWidget *window, *grid, *genBn;
     gtk_init(&argc, &argv);
     
-    window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    GtkWidget *window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
 
-    grid = gtk_grid_new();
+    GtkWidget *grid = gtk_grid_new();
     gtk_container_add(GTK_CONTAINER(window), grid);
 
-    GtkWidget *imgName_label = gtk_label_new("Image Name:");
-    imgName = gtk_entry_new();
-    gtk_grid_attach(GTK_GRID(grid), imgName_label, 0, 0, 1, 1);
-    gtk_grid_attach(GTK_GRID(grid), imgName, 1, 0, 1, 1);
+    GtkWidget *imgName_wdgt_label = gtk_label_new("Image Name:");
+    imgName_wdgt = gtk_entry_new();
+    gtk_grid_attach(GTK_GRID(grid), imgName_wdgt_label, 0, 0, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), imgName_wdgt, 1, 0, 1, 1);
 
     GtkWidget *space0 = gtk_label_new(" ");
     gtk_grid_attach(GTK_GRID(grid), space0, 0, 1, 1, 1);
 
     GtkWidget *demensions_label = gtk_label_new("Dimensions  (Width,Height): ");
-    xSz = gtk_entry_new();
-    ySz = gtk_entry_new();
+    width_wdgt = gtk_entry_new();
+    height_wdgt = gtk_entry_new();
     gtk_grid_attach(GTK_GRID(grid), demensions_label, 0, 2, 1, 1);
-    gtk_grid_attach(GTK_GRID(grid), xSz, 1, 2, 1, 1);
-    gtk_grid_attach(GTK_GRID(grid), ySz, 2, 2, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), width_wdgt, 1, 2, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), height_wdgt, 2, 2, 1, 1);
 
     GtkWidget *space1 = gtk_label_new(" ");
     gtk_grid_attach(GTK_GRID(grid), space1, 0, 3, 1, 1);
 
-    GtkWidget *intensity_directions_pt0 = gtk_label_new("Higher number for more precision");
-    GtkWidget *intensity_directions_pt1 = gtk_label_new(" (must be less than 65536)");
-    GtkWidget *intensity_label = gtk_label_new("Color intensity: ");
-    intensity = gtk_entry_new_with_buffer(gtk_entry_buffer_new("255",3));
-    gtk_grid_attach(GTK_GRID(grid), intensity_directions_pt0, 0, 4, 1, 1);
-    gtk_grid_attach(GTK_GRID(grid), intensity_directions_pt1, 1, 4, 1, 1);
-    gtk_grid_attach(GTK_GRID(grid), intensity_label, 0, 5, 1, 1);
-    gtk_grid_attach(GTK_GRID(grid), intensity, 1, 5, 1, 1);
+    GtkWidget *intensity_wdgt_directions_pt0 = gtk_label_new("Higher number for more precision");
+    GtkWidget *intensity_wdgt_directions_pt1 = gtk_label_new(" (must be less than 65536)");
+    GtkWidget *intensity_wdgt_label = gtk_label_new("Color intensity: ");
+    intensity_wdgt = gtk_entry_new_with_buffer(gtk_entry_buffer_new("255",3));
+    gtk_grid_attach(GTK_GRID(grid), intensity_wdgt_directions_pt0, 0, 4, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), intensity_wdgt_directions_pt1, 1, 4, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), intensity_wdgt_label, 0, 5, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), intensity_wdgt, 1, 5, 1, 1);
     
     GtkWidget *space2 = gtk_label_new(" ");
     gtk_grid_attach(GTK_GRID(grid), space2, 0, 6, 1, 1);
@@ -84,25 +238,25 @@ int main(int argc, char **argv) {
     gtk_grid_attach(GTK_GRID(grid), rng_label_format, 1, 7, 1, 1);
 
     GtkWidget *rRng_label = gtk_label_new("Red Range: ");
-    rLow = gtk_entry_new_with_buffer(gtk_entry_buffer_new("-5",2));
-    rHigh = gtk_entry_new_with_buffer(gtk_entry_buffer_new("5",1));
+    rLow_wdgt = gtk_entry_new_with_buffer(gtk_entry_buffer_new("-5",2));
+    rHigh_wdgt = gtk_entry_new_with_buffer(gtk_entry_buffer_new("5",1));
     gtk_grid_attach(GTK_GRID(grid), rRng_label, 0, 8, 1, 1);
-    gtk_grid_attach(GTK_GRID(grid), rLow, 1, 8, 1, 1);
-    gtk_grid_attach(GTK_GRID(grid), rHigh, 2, 8, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), rLow_wdgt, 1, 8, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), rHigh_wdgt, 2, 8, 1, 1);
 
     GtkWidget *gRng_label = gtk_label_new("Green Range: ");
-    gLow = gtk_entry_new_with_buffer(gtk_entry_buffer_new("-5",2));
-    gHigh = gtk_entry_new_with_buffer(gtk_entry_buffer_new("5",1));
+    gLow_wdgt = gtk_entry_new_with_buffer(gtk_entry_buffer_new("-5",2));
+    gHigh_wdgt = gtk_entry_new_with_buffer(gtk_entry_buffer_new("5",1));
     gtk_grid_attach(GTK_GRID(grid), gRng_label, 0, 9, 1, 1);
-    gtk_grid_attach(GTK_GRID(grid), gLow, 1, 9, 1, 1);
-    gtk_grid_attach(GTK_GRID(grid), gHigh, 2, 9, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), gLow_wdgt, 1, 9, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), gHigh_wdgt, 2, 9, 1, 1);
 
     GtkWidget *bRng_label = gtk_label_new("Blue Range: ");
-    bLow = gtk_entry_new_with_buffer(gtk_entry_buffer_new("-5",2));
-    bHigh = gtk_entry_new_with_buffer(gtk_entry_buffer_new("5",1));
+    bLow_wdgt = gtk_entry_new_with_buffer(gtk_entry_buffer_new("-5",2));
+    bHigh_wdgt = gtk_entry_new_with_buffer(gtk_entry_buffer_new("5",1));
     gtk_grid_attach(GTK_GRID(grid), bRng_label, 0, 10, 1, 1);
-    gtk_grid_attach(GTK_GRID(grid), bLow, 1, 10, 1, 1);
-    gtk_grid_attach(GTK_GRID(grid), bHigh, 2, 10, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), bLow_wdgt, 1, 10, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), bHigh_wdgt, 2, 10, 1, 1);
 
 
     GtkWidget *space3 = gtk_label_new(" ");
@@ -120,18 +274,20 @@ int main(int argc, char **argv) {
     gtk_grid_attach(GTK_GRID(grid), x_start, 1, 13, 1, 1);
     gtk_grid_attach(GTK_GRID(grid), y_start, 2, 13, 1, 1);
 
-    // number1 = gtk_entry_new();
-    // gtk_grid_attach(GTK_GRID(grid), number1, 0, 0, 1, 1);
+    GtkWidget *space4 = gtk_label_new(" ");
+    gtk_grid_attach(GTK_GRID(grid), space3, 0, 14, 1, 1);
 
-    // number2 = gtk_entry_new();
-    // gtk_grid_attach(GTK_GRID(grid), number2, 1, 0, 1, 1);
+    GtkWidget *color_label = gtk_label_new("Starting color: ");
+    color_button = gtk_color_button_new();
+    gtk_grid_attach(GTK_GRID(grid), color_label, 0, 15, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), color_button, 1, 15, 1, 1);
 
-    // genBn = gtk_button_new_with_label("Generate");
-    // g_signal_connect(genBn, "clicked", G_CALLBACK(generate), NULL);
-    // gtk_grid_attach(GTK_GRID(grid), genBn, 2, 0, 1, 1);
-
-    // result = gtk_label_new("result:");
-    // gtk_grid_attach(GTK_GRID(grid), result, 0, 1, 1, 1);
+    GtkWidget *genBn = gtk_button_new_with_label("Generate");
+    g_signal_connect(genBn, "clicked", G_CALLBACK(generate), NULL);
+    gtk_grid_attach(GTK_GRID(grid), genBn, 0, 16, 1, 1);
+    
+    error_output = gtk_label_new(" ");
+    gtk_grid_attach(GTK_GRID(grid), error_output, 0, 17, 1, 1);
 
     gtk_widget_show_all(window);
     gtk_main();
