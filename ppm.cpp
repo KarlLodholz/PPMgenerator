@@ -11,6 +11,9 @@
 #include <gdk/gdk.h>
 //using namespace std;
 
+// compile with
+// c++ ppm.cpp -o ppm `pkg-config --cflags gtk+-3.0` `pkg-config --libs gtk+-3.0`
+
 static GtkWidget *imgName_wdgt,*width_wdgt,*height_wdgt,*intensity_wdgt,*rLow_wdgt,*rHigh_wdgt,*gLow_wdgt,*gHigh_wdgt,*bLow_wdgt,*bHigh_wdgt,*x_start,*y_start,*color_button,*error_output;
 
 class Pixel {
@@ -127,14 +130,14 @@ void generate(GtkWidget *genBn, gpointer data) {
     int blue = stoi(temp_color.substr(0,temp_color.find_first_of(')')));
 
     // gtk_label_set_text(GTK_LABEL(error_output),red.c_str());
-    std::cout << red << "," << green << "," << blue << std::endl;
-
+    //std::cout << red << "," << green << "," << blue << std::endl;
+    gtk_label_set_text(GTK_LABEL(error_output),"");
     if(imgName == "") { 
         valid = false;
         gtk_label_set_text(GTK_LABEL(error_output),"Missing name of file");
     }
     else {
-        if(x < 0 || y < 0){
+        if(width < 0 || height < 0){
             valid = false;
             gtk_label_set_text(GTK_LABEL(error_output),"Invalid Dimensions");
         }
@@ -166,6 +169,10 @@ void generate(GtkWidget *genBn, gpointer data) {
 
         //random starting position
         bool last = false;
+        if(x == -1) {
+            x = rand()%width;
+            y = rand()%height;
+        }
         locToPix(p,nxt,x,y,width,height,red,green,blue,intensity,rHigh,gHigh,bHigh,rLow,gLow,bLow);
         do {
             if(nxt.empty()) //only happen when nxt has no more pixels that need to be colored.
@@ -188,11 +195,11 @@ void generate(GtkWidget *genBn, gpointer data) {
             }
             ppm<<"\n";
         }
+        gtk_label_set_text(GTK_LABEL(error_output),(imgName+" has been successfully generated").c_str());
     }
-
+    return;
 }
 
-// gcc test.cpp -o test `pkg-config --cflags gtk+-3.0` `pkg-config --libs gtk+-3.0`
 int main(int argc, char **argv) {
     gtk_init(&argc, &argv);
     
