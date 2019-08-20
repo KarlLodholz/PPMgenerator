@@ -123,11 +123,11 @@ void generate(GtkWidget *genBn, gpointer data) {
     GdkRGBA *color = new GdkRGBA();
     gtk_color_chooser_get_rgba(GTK_COLOR_CHOOSER(color_button), color);
     std::string temp_color = gdk_rgba_to_string(color);
-    int red = stoi(temp_color.substr(temp_color.find_first_of('(')+1,temp_color.find_first_of(',')-temp_color.find_first_of('(')-1));
+    int red = stoi(temp_color.substr(temp_color.find_first_of('(')+1,temp_color.find_first_of(',')-temp_color.find_first_of('(')-1)) / 255 * intensity;
     temp_color = temp_color.substr(temp_color.find_first_of(',')+1,std::string::npos);
-    int green = stoi(temp_color.substr(0,temp_color.find_first_of(',')));
+    int green = stoi(temp_color.substr(0,temp_color.find_first_of(','))) / 255 * intensity;
     temp_color = temp_color.substr(temp_color.find_first_of(',')+1,std::string::npos);
-    int blue = stoi(temp_color.substr(0,temp_color.find_first_of(')')));
+    int blue = stoi(temp_color.substr(0,temp_color.find_first_of(')'))) / 255 * intensity;
 
     // gtk_label_set_text(GTK_LABEL(error_output),red.c_str());
     //std::cout << red << "," << green << "," << blue << std::endl;
