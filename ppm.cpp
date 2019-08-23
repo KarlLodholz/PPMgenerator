@@ -9,12 +9,13 @@
 #include <stdio.h>
 #include <gtk/gtk.h>
 #include <gdk/gdk.h>
+//#include "timer.h"
 //using namespace std;
 
 // compile with
 // c++ ppm.cpp -o ppm `pkg-config --cflags gtk+-3.0` `pkg-config --libs gtk+-3.0`
 
-static GtkWidget *imgName_wdgt,*width_wdgt,*height_wdgt,*intensity_wdgt,*rLow_wdgt,*rHigh_wdgt,*gLow_wdgt,*gHigh_wdgt,*bLow_wdgt,*bHigh_wdgt,*x_start,*y_start,*color_button,*error_output;
+static GtkWidget *imgName_wdgt,*width_wdgt,*height_wdgt,*intensity_wdgt,*rLow_wdgt,*rHigh_wdgt,*gLow_wdgt,*gHigh_wdgt,*bLow_wdgt,*bHigh_wdgt,*x_start,*y_start,*color_button,*bias_wdgt,*error_output;
 
 class Pixel {
     public:
@@ -117,20 +118,21 @@ void generate(GtkWidget *genBn, gpointer data) {
     std::string imgName = gtk_entry_get_text(GTK_ENTRY(imgName_wdgt));
     int width = atoi((char *)gtk_entry_get_text(GTK_ENTRY(width_wdgt)));
     int height = atoi((char *)gtk_entry_get_text(GTK_ENTRY(height_wdgt)));
+    int bias = atoi((char *)gtk_entry_get_text(GTK_ENTRY(bias_wdgt)));
     bool valid = true;
     
-    //converts the color button's collor to 3 ints red, green, and blue;
+    //converts the color button's color to 3 ints red, green, and blue;
     GdkRGBA *color = new GdkRGBA();
     gtk_color_chooser_get_rgba(GTK_COLOR_CHOOSER(color_button), color);
     std::string temp_color = gdk_rgba_to_string(color);
-    int red = stoi(temp_color.substr(temp_color.find_first_of('(')+1,temp_color.find_first_of(',')-temp_color.find_first_of('(')-1)) / 255 * intensity;
+    int red = (int)(stoi(temp_color.substr(temp_color.find_first_of('(')+1,temp_color.find_first_of(',')-temp_color.find_first_of('(')-1)) / 255.0 * intensity);
     temp_color = temp_color.substr(temp_color.find_first_of(',')+1,std::string::npos);
-    int green = stoi(temp_color.substr(0,temp_color.find_first_of(','))) / 255 * intensity;
+    int green = (int)(stoi(temp_color.substr(0,temp_color.find_first_of(','))) / 255.0 * intensity);
     temp_color = temp_color.substr(temp_color.find_first_of(',')+1,std::string::npos);
-    int blue = stoi(temp_color.substr(0,temp_color.find_first_of(')'))) / 255 * intensity;
+    int blue = (int)(stoi(temp_color.substr(0,temp_color.find_first_of(')'))) / 255.0 * intensity);
 
-    // gtk_label_set_text(GTK_LABEL(error_output),red.c_str());
-    //std::cout << red << "," << green << "," << blue << std::endl;
+    // std::cout<<"("<<red<<","<<green<<","<<blue<<")"<<std::endl;
+    // std::cout<<gdk_rgba_to_string(color)<<std::endl;
     gtk_label_set_text(GTK_LABEL(error_output),"");
     if(imgName == "") { 
         valid = false;
@@ -150,8 +152,7 @@ void generate(GtkWidget *genBn, gpointer data) {
     }
 
     if(valid) {
-        srand(time(NULL)); //init rand seed;
-
+        //Timer t;
         Pixel **p = new Pixel*[width];
         for(int i=0;i<width;i++){
             p[i] = new Pixel[height];
@@ -159,8 +160,6 @@ void generate(GtkWidget *genBn, gpointer data) {
         
         // its one big array of integers because poping is O(n);
         std::vector<int> nxt; 
-
-        nxt.reserve(width*height*(8/9));  // 8/9 is the highest possible ratio of next possible pixels to total pixels
 
         //startPix(p,nxt,width,height,intensity,rRng,gRng,bRng,rOfst,gOfst,bOfst); //get user input on starting pixels and starts pixels;
 
@@ -179,6 +178,9 @@ void generate(GtkWidget *genBn, gpointer data) {
                 last = true;
             if(!nxt.empty()) {
                 int rando = rand()%nxt.size();
+                for(int i=0;i<bias;i++)
+                    if(rando)
+                        rando = rand()%rando;
                 numToPos(nxt[rando],x,y,width); //updates x and y to nxt[rando]
                 std::swap(nxt[rando],nxt[nxt.size()-1]);
                 nxt.pop_back();
@@ -201,6 +203,7 @@ void generate(GtkWidget *genBn, gpointer data) {
 }
 
 int main(int argc, char **argv) {
+    srand(time(NULL)); //init rand seed;
     gtk_init(&argc, &argv);
     
     GtkWidget *window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
@@ -285,9 +288,11 @@ int main(int argc, char **argv) {
     gtk_grid_attach(GTK_GRID(grid), space3, 0, 14, 1, 1);
 
     GtkWidget *color_label = gtk_label_new("Starting color: ");
+    bias_wdgt = gtk_entry_new_with_buffer(gtk_entry_buffer_new("0",1));
     color_button = gtk_color_button_new();
     gtk_grid_attach(GTK_GRID(grid), color_label, 0, 15, 1, 1);
     gtk_grid_attach(GTK_GRID(grid), color_button, 1, 15, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), bias_wdgt, 2, 15, 1, 1);
 
     GtkWidget *genBn = gtk_button_new_with_label("Generate");
     g_signal_connect(genBn, "clicked", G_CALLBACK(generate), NULL);
