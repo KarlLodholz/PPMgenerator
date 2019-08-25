@@ -120,6 +120,8 @@ void generate(GtkWidget *genBn, gpointer data) {
     int height = atoi((char *)gtk_entry_get_text(GTK_ENTRY(height_wdgt)));
     int bias = atoi((char *)gtk_entry_get_text(GTK_ENTRY(bias_wdgt)));
     bool valid = true;
+
+    std::cout<<"rLow:"<<rLow<<" rHigh:"<<rHigh<<std::endl;
     
     //converts the color button's color to 3 ints red, green, and blue;
     GdkRGBA *color = new GdkRGBA();
