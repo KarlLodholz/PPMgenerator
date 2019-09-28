@@ -37,9 +37,9 @@ void numToPos(const int &num, int &x, int &y, const int &width) {
 
 void nxtColor(Pixel **p,std::vector<int> &nxt,const int &x,const int &y,const int &width,int &red,int &green,int &blue, int &cntr){
     if(p[x][y].r == -1){
-        if(p[x][y].g == -1) {  //if it has not been added to nxt
+        if(p[x][y].g == -1) {  //if it has been added to nxt
             nxt.push_back(posToNum(x,y,width));
-            p[x][y].g = -2; //-2 means it has been added to nxt
+            p[x][y].g = -2; ////flag to check if it has been added to nxt
         }
     }
     else {
@@ -62,6 +62,7 @@ void locToPix(Pixel **p,std::vector<int> &nxt,const int &x,const int &y,const in
     right = x+1<width;
     up = y-1>=0;
     down = y+1<height;
+
     if(up && left)
         nxtColor(p,nxt,x-1,y-1,width,red,green,blue,colorCntr);  
     if(up)
@@ -78,11 +79,12 @@ void locToPix(Pixel **p,std::vector<int> &nxt,const int &x,const int &y,const in
         nxtColor(p,nxt,x,y+1,width,red,green,blue,colorCntr);  
     if(down && right)
         nxtColor(p,nxt,x+1,y+1,width,red,green,blue,colorCntr);  
+    
     //get color avgs around pixel
-    if(colorCntr) {
-        red = (int)(red/(float)colorCntr+0.5) + (rand()%rRng+rOfst); //adding 0.5 creates a rounding effect to help balance integer devision
-        green = (int)(green/(float)colorCntr+0.5) + (rand()%gRng+gOfst);
-        blue = (int)(blue/(float)colorCntr+0.5) + (rand()%bRng+bOfst);
+    if(colorCntr){
+        red = (red/colorCntr) + (rand()%rRng+rOfst);
+        green = (green/colorCntr) + (rand()%gRng+gOfst);
+        blue = (blue/colorCntr) + (rand()%bRng+bOfst);
     }
     if(red > intensity)
         red = intensity;
@@ -120,7 +122,7 @@ void generate(GtkWidget *genBn, gpointer data) {
     int bias = atoi((char *)gtk_entry_get_text(GTK_ENTRY(bias_wdgt)));
     bool valid = true;
 
-    //std::cout<<"rLow:"<<rLow<<" rHigh:"<<rHigh<<std::endl;
+    std::cout<<"rLow:"<<rLow<<" rHigh:"<<rHigh<<std::endl;
     
     //converts the color button's color to 3 ints red, green, and blue;
     GdkRGBA *color = new GdkRGBA();
@@ -140,7 +142,7 @@ void generate(GtkWidget *genBn, gpointer data) {
         gtk_label_set_text(GTK_LABEL(error_output),"Missing name of file");
     }
     else {
-        if(width <= 0 || height <= 0){
+        if(width < 0 || height < 0){
             valid = false;
             gtk_label_set_text(GTK_LABEL(error_output),"Invalid Dimensions");
         }
