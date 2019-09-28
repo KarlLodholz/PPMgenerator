@@ -15,7 +15,7 @@
 // compile with
 // c++ ppm.cpp -o ppm `pkg-config --cflags gtk+-3.0` `pkg-config --libs gtk+-3.0`
 
-static GtkWidget *imgName_wdgt,*width_wdgt,*height_wdgt,*intensity_wdgt,*rLow_wdgt,*rHigh_wdgt,*gLow_wdgt,*gHigh_wdgt,*bLow_wdgt,*bHigh_wdgt,*x_start,*y_start,*color_button,*bias_wdgt,*error_output;
+static GtkWidget *imgName_wdgt,*width_wdgt,*height_wdgt,*intensity_wdgt,*rLow_wdgt,*rHigh_wdgt,*gLow_wdgt,*gHigh_wdgt,*bLow_wdgt,*bHigh_wdgt,*x_start,*y_start,*color_button,*bias_wdgt,*radius_wdgt,*error_output;
 
 class Pixel {
     public:
@@ -118,6 +118,7 @@ void generate(GtkWidget *genBn, gpointer data) {
     std::string imgName = gtk_entry_get_text(GTK_ENTRY(imgName_wdgt));
     int width = atoi((char *)gtk_entry_get_text(GTK_ENTRY(width_wdgt)));
     int height = atoi((char *)gtk_entry_get_text(GTK_ENTRY(height_wdgt)));
+    int radius = atoi((char *)gtk_entry_get_text(GTK_ENTRY(radius_wdgt)));
     int bias = atoi((char *)gtk_entry_get_text(GTK_ENTRY(bias_wdgt)));
     bool valid = true;
 
@@ -205,6 +206,7 @@ void generate(GtkWidget *genBn, gpointer data) {
 }
 
 int main(int argc, char **argv) {
+    int row = 0;
     srand(time(NULL)); //init rand seed;
     gtk_init(&argc, &argv);
     
@@ -216,92 +218,95 @@ int main(int argc, char **argv) {
 
     GtkWidget *imgName_wdgt_label = gtk_label_new("Image Name:");
     imgName_wdgt = gtk_entry_new();
-    gtk_grid_attach(GTK_GRID(grid), imgName_wdgt_label, 0, 0, 1, 1);
-    gtk_grid_attach(GTK_GRID(grid), imgName_wdgt, 1, 0, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), imgName_wdgt_label, 0, row, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), imgName_wdgt, 1, row++, 1, 1);
 
     GtkWidget *space0 = gtk_label_new(" ");
-    gtk_grid_attach(GTK_GRID(grid), space0, 0, 1, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), space0, 0, row++, 1, 1);
 
     GtkWidget *demensions_label = gtk_label_new("Dimensions  (Width,Height): ");
     width_wdgt = gtk_entry_new();
     height_wdgt = gtk_entry_new();
-    gtk_grid_attach(GTK_GRID(grid), demensions_label, 0, 2, 1, 1);
-    gtk_grid_attach(GTK_GRID(grid), width_wdgt, 1, 2, 1, 1);
-    gtk_grid_attach(GTK_GRID(grid), height_wdgt, 2, 2, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), demensions_label, 0, row, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), width_wdgt, 1, row, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), height_wdgt, 2, row++, 1, 1);
 
     GtkWidget *space1 = gtk_label_new(" ");
-    gtk_grid_attach(GTK_GRID(grid), space1, 0, 3, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), space1, 0, row++, 1, 1);
 
     GtkWidget *intensity_wdgt_directions_pt0 = gtk_label_new("Higher number for more precision");
     GtkWidget *intensity_wdgt_directions_pt1 = gtk_label_new(" (must be less than 65536)");
     GtkWidget *intensity_wdgt_label = gtk_label_new("Color intensity: ");
     intensity_wdgt = gtk_entry_new_with_buffer(gtk_entry_buffer_new("255",3));
-    gtk_grid_attach(GTK_GRID(grid), intensity_wdgt_directions_pt0, 0, 4, 1, 1);
-    gtk_grid_attach(GTK_GRID(grid), intensity_wdgt_directions_pt1, 1, 4, 1, 1);
-    gtk_grid_attach(GTK_GRID(grid), intensity_wdgt_label, 0, 5, 1, 1);
-    gtk_grid_attach(GTK_GRID(grid), intensity_wdgt, 1, 5, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), intensity_wdgt_directions_pt0, 0, row, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), intensity_wdgt_directions_pt1, 1, row++, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), intensity_wdgt_label, 0, row, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), intensity_wdgt, 1, row++, 1, 1);
     
     GtkWidget *space2 = gtk_label_new(" ");
-    gtk_grid_attach(GTK_GRID(grid), space2, 0, 6, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), space2, 0, row++, 1, 1);
 
     GtkWidget *rng_label = gtk_label_new("Range of fluctuation");
     GtkWidget *rng_label_format = gtk_label_new("(minimum, maximum)");
-    gtk_grid_attach(GTK_GRID(grid), rng_label, 0, 7, 1, 1);
-    gtk_grid_attach(GTK_GRID(grid), rng_label_format, 1, 7, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), rng_label, 0, row, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), rng_label_format, 1, row++, 1, 1);
 
     GtkWidget *rRng_label = gtk_label_new("Red Range: ");
     rLow_wdgt = gtk_entry_new_with_buffer(gtk_entry_buffer_new("-5",2));
     rHigh_wdgt = gtk_entry_new_with_buffer(gtk_entry_buffer_new("5",1));
-    gtk_grid_attach(GTK_GRID(grid), rRng_label, 0, 8, 1, 1);
-    gtk_grid_attach(GTK_GRID(grid), rLow_wdgt, 1, 8, 1, 1);
-    gtk_grid_attach(GTK_GRID(grid), rHigh_wdgt, 2, 8, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), rRng_label, 0, row, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), rLow_wdgt, 1, row, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), rHigh_wdgt, 2, row++, 1, 1);
 
     GtkWidget *gRng_label = gtk_label_new("Green Range: ");
     gLow_wdgt = gtk_entry_new_with_buffer(gtk_entry_buffer_new("-5",2));
     gHigh_wdgt = gtk_entry_new_with_buffer(gtk_entry_buffer_new("5",1));
-    gtk_grid_attach(GTK_GRID(grid), gRng_label, 0, 9, 1, 1);
-    gtk_grid_attach(GTK_GRID(grid), gLow_wdgt, 1, 9, 1, 1);
-    gtk_grid_attach(GTK_GRID(grid), gHigh_wdgt, 2, 9, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), gRng_label, 0, row, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), gLow_wdgt, 1, row, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), gHigh_wdgt, 2, row++, 1, 1);
 
     GtkWidget *bRng_label = gtk_label_new("Blue Range: ");
     bLow_wdgt = gtk_entry_new_with_buffer(gtk_entry_buffer_new("-5",2));
     bHigh_wdgt = gtk_entry_new_with_buffer(gtk_entry_buffer_new("5",1));
-    gtk_grid_attach(GTK_GRID(grid), bRng_label, 0, 10, 1, 1);
-    gtk_grid_attach(GTK_GRID(grid), bLow_wdgt, 1, 10, 1, 1);
-    gtk_grid_attach(GTK_GRID(grid), bHigh_wdgt, 2, 10, 1, 1);
-
+    gtk_grid_attach(GTK_GRID(grid), bRng_label, 0, row, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), bLow_wdgt, 1, row, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), bHigh_wdgt, 2, row++, 1, 1);
 
     GtkWidget *space3 = gtk_label_new(" ");
-    gtk_grid_attach(GTK_GRID(grid), space3, 0, 11, 1, 1);
-
+    gtk_grid_attach(GTK_GRID(grid), space3, 0, row++, 1, 1);
 
     GtkWidget *starting_pnt_label_pt0 = gtk_label_new("Starting location");
     GtkWidget *starting_pnt_label_pt1 = gtk_label_new("-1 for random location");
     GtkWidget *starting_pnt_label = gtk_label_new("(x, y): ");
     x_start = gtk_entry_new_with_buffer(gtk_entry_buffer_new("-1",2));
     y_start = gtk_entry_new_with_buffer(gtk_entry_buffer_new("-1",2));
-    gtk_grid_attach(GTK_GRID(grid), starting_pnt_label_pt0, 0, 12, 1, 1);
-    gtk_grid_attach(GTK_GRID(grid), starting_pnt_label_pt1, 1, 12, 1, 1);
-    gtk_grid_attach(GTK_GRID(grid), starting_pnt_label, 0, 13, 1, 1);
-    gtk_grid_attach(GTK_GRID(grid), x_start, 1, 13, 1, 1);
-    gtk_grid_attach(GTK_GRID(grid), y_start, 2, 13, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), starting_pnt_label_pt0, 0, row, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), starting_pnt_label_pt1, 1, row++, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), starting_pnt_label, 0, row, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), x_start, 1, row, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), y_start, 2, row++, 1, 1);
 
     GtkWidget *space4 = gtk_label_new(" ");
-    gtk_grid_attach(GTK_GRID(grid), space3, 0, 14, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), space3, 0, row++, 1, 1);
 
     GtkWidget *color_label = gtk_label_new("Starting color: ");
-    bias_wdgt = gtk_entry_new_with_buffer(gtk_entry_buffer_new("0",1));
     color_button = gtk_color_button_new();
-    gtk_grid_attach(GTK_GRID(grid), color_label, 0, 15, 1, 1);
-    gtk_grid_attach(GTK_GRID(grid), color_button, 1, 15, 1, 1);
-    gtk_grid_attach(GTK_GRID(grid), bias_wdgt, 2, 15, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), color_label, 0, row, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), color_button, 1, row++, 1, 1);
+
+    GtkWidget *radius_label = gtk_label_new("Radius: ");
+    bias_wdgt = gtk_entry_new_with_buffer(gtk_entry_buffer_new("0",1));
+    radius_wdgt = gtk_entry_new_with_buffer(gtk_entry_buffer_new("1",1));
+    gtk_grid_attach(GTK_GRID(grid), radius_label, 0, row,1,1);
+    gtk_grid_attach(GTK_GRID(grid), radius_wdgt, 1, row,1,1);
+    gtk_grid_attach(GTK_GRID(grid), bias_wdgt, 2, row++, 1, 1);
 
     GtkWidget *genBn = gtk_button_new_with_label("Generate");
     g_signal_connect(genBn, "clicked", G_CALLBACK(generate), NULL);
-    gtk_grid_attach(GTK_GRID(grid), genBn, 0, 16, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), genBn, 0, row++, 1, 1);
     
     error_output = gtk_label_new(" ");
-    gtk_grid_attach(GTK_GRID(grid), error_output, 0, 17, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), error_output, 0, row++, 1, 1);
 
     gtk_widget_show_all(window);
     gtk_main();
