@@ -1,141 +1,24 @@
-#include <iostream>
-#include <fstream>
-#include <time.h>
-#include <vector>
-#include <algorithm>
-#include <ctime>
-#include <cstdio>
-#include <stdlib.h>
-#include <stdio.h>
+#include "ppm.h"
 #include <gtk/gtk.h>
 #include <gdk/gdk.h>
+
 //#include "timer.h"
-//using namespace std;
 
 // compile with
 // c++ ppm.cpp -o ppm `pkg-config --cflags gtk+-3.0` `pkg-config --libs gtk+-3.0`
 
 static GtkWidget *imgName_wdgt,*width_wdgt,*height_wdgt,*intensity_wdgt,*rLow_wdgt,*rHigh_wdgt,*gLow_wdgt,*gHigh_wdgt,*bLow_wdgt,*bHigh_wdgt,*x_start,*y_start,*color_button,*bias_wdgt,*radius_wdgt,*error_output;
-
-class Pixel {
-    public:
-        int r,g,b; //should be a number between 0-intennsity
-        Pixel(){r=-1;g=-1;b=-1;};
-        void setColor(const int &red,const int &green,const int &blue) {r=red;g=green;b=blue;};
-        
-};
-
-int posToNum(const int &x, const int &y, const int &width) {
-    return (y*(width)+x);
-}
-
-void numToPos(const int &num, int &x, int &y, const int &width) {
-    y = (int)(num / (width));
-    x = num % (width);
-    return;
-}
-
-void nxtColor(Pixel **p,std::vector<int> &nxt,const int &x,const int &y,const int &width,int &red,int &green,int &blue, int &cntr){
-    if(p[x][y].r == -1){
-        if(p[x][y].g == -1) {  //if it has been added to nxt
-            nxt.push_back(posToNum(x,y,width));
-            p[x][y].g = -2; ////flag to check if it has been added to nxt
-        }
-    }
-    else {
-        red += p[x][y].r;
-        green += p[x][y].g;
-        blue += p[x][y].b;
-        cntr++;
-    }
-}
-
-void locToPix(Pixel **p,std::vector<int> &nxt,const int &x,const int &y,const int &width,const int &height,
-    int &red,int &green, int &blue,const int intensity, 
-    const int &rRng,const int &gRng,const int &bRng,const int &rOfst, const int &gOfst, const int &bOfst) {
-    
-    bool left, up, down, right;
-    int colorCntr = 0;
-    
-    //bool determining if the current pixel is within bounds
-    left = x-1>=0;
-    right = x+1<width;
-    up = y-1>=0;
-    down = y+1<height;
-
-    if(up && left)
-        nxtColor(p,nxt,x-1,y-1,width,red,green,blue,colorCntr);  
-    if(up)
-        nxtColor(p,nxt,x,y-1,width,red,green,blue,colorCntr);
-    if(up & right)
-        nxtColor(p,nxt,x+1,y-1,width,red,green,blue,colorCntr);   
-    if(left)
-        nxtColor(p,nxt,x-1,y,width,red,green,blue,colorCntr);  
-    if(right)
-        nxtColor(p,nxt,x+1,y,width,red,green,blue,colorCntr);  
-    if(down & left)
-        nxtColor(p,nxt,x-1,y+1,width,red,green,blue,colorCntr);  
-    if(down)
-        nxtColor(p,nxt,x,y+1,width,red,green,blue,colorCntr);  
-    if(down && right)
-        nxtColor(p,nxt,x+1,y+1,width,red,green,blue,colorCntr);  
-    
-    //get color avgs around pixel
-    if(colorCntr){
-        red = (red/colorCntr) + (rand()%rRng+rOfst);
-        green = (green/colorCntr) + (rand()%gRng+gOfst);
-        blue = (blue/colorCntr) + (rand()%bRng+bOfst);
-    }
-    if(red > intensity)
-        red = intensity;
-    if(red < 0)
-        red = 0;
-    if(green > intensity)
-        green = intensity;
-    if(green < 0)
-        green = 0;
-    if(blue > intensity)
-        blue = intensity;
-    if(blue < 0)
-        blue = 0;
-
-    p[x][y].setColor(red,green,blue);
-    red = green = blue = 0;
-    return;
-}
-
+               
 void generate(GtkWidget *genBn, gpointer data) {
     
-    int intensity = atoi((char *)gtk_entry_get_text(GTK_ENTRY(intensity_wdgt)));
-    int rLow = atoi((char *)gtk_entry_get_text(GTK_ENTRY(rLow_wdgt)));
-    int rHigh = atoi((char *)gtk_entry_get_text(GTK_ENTRY(rHigh_wdgt)))-rLow+1;
-    int gLow = atoi((char *)gtk_entry_get_text(GTK_ENTRY(gLow_wdgt)));
-    int gHigh = atoi((char *)gtk_entry_get_text(GTK_ENTRY(gHigh_wdgt)))-gLow+1;
-    int bLow = atoi((char *)gtk_entry_get_text(GTK_ENTRY(bLow_wdgt)));
-    int bHigh = atoi((char *)gtk_entry_get_text(GTK_ENTRY(bHigh_wdgt)))-bLow+1;
-    int x = atoi((char *)gtk_entry_get_text(GTK_ENTRY(x_start)));
-    int y = atoi((char *)gtk_entry_get_text(GTK_ENTRY(y_start)));
     std::string imgName = gtk_entry_get_text(GTK_ENTRY(imgName_wdgt));
     int width = atoi((char *)gtk_entry_get_text(GTK_ENTRY(width_wdgt)));
-    int height = atoi((char *)gtk_entry_get_text(GTK_ENTRY(height_wdgt)));
-    int radius = atoi((char *)gtk_entry_get_text(GTK_ENTRY(radius_wdgt)));
-    int bias = atoi((char *)gtk_entry_get_text(GTK_ENTRY(bias_wdgt)));
+    int height = atoi((char *)gtk_entry_get_text(GTK_ENTRY(height_wdgt))); 
+    int x = atoi((char *)gtk_entry_get_text(GTK_ENTRY(x_start))); 
+    int y = atoi((char *)gtk_entry_get_text(GTK_ENTRY(y_start))); 
+
     bool valid = true;
 
-    std::cout<<"rLow:"<<rLow<<" rHigh:"<<rHigh<<std::endl;
-    
-    //converts the color button's color to 3 ints red, green, and blue;
-    GdkRGBA *color = new GdkRGBA();
-    gtk_color_chooser_get_rgba(GTK_COLOR_CHOOSER(color_button), color);
-    std::string temp_color = gdk_rgba_to_string(color);
-    int red = (int)(stoi(temp_color.substr(temp_color.find_first_of('(')+1,temp_color.find_first_of(',')-temp_color.find_first_of('(')-1)) / 255.0 * intensity);
-    temp_color = temp_color.substr(temp_color.find_first_of(',')+1,std::string::npos);
-    int green = (int)(stoi(temp_color.substr(0,temp_color.find_first_of(','))) / 255.0 * intensity);
-    temp_color = temp_color.substr(temp_color.find_first_of(',')+1,std::string::npos);
-    int blue = (int)(stoi(temp_color.substr(0,temp_color.find_first_of(')'))) / 255.0 * intensity);
-
-    // std::cout<<"("<<red<<","<<green<<","<<blue<<")"<<std::endl;
-    // std::cout<<gdk_rgba_to_string(color)<<std::endl;
     gtk_label_set_text(GTK_LABEL(error_output),"");
     if(imgName == "") { 
         valid = false;
@@ -153,55 +36,70 @@ void generate(GtkWidget *genBn, gpointer data) {
             }
         }
     }
-
+    
     if(valid) {
+        //converts the color button's color to 3 ints red, green, and blue;
+        GdkRGBA *color = new GdkRGBA();
+        gtk_color_chooser_get_rgba(GTK_COLOR_CHOOSER(color_button), color);
+        std::string temp_color = gdk_rgba_to_string(color);
+        int initRed = (int)(stoi(temp_color.substr(temp_color.find_first_of('(')+1,temp_color.find_first_of(',')-temp_color.find_first_of('(')-1)));
+        temp_color = temp_color.substr(temp_color.find_first_of(',')+1,std::string::npos);
+        int initGreen = (int)(stoi(temp_color.substr(0,temp_color.find_first_of(','))));
+        temp_color = temp_color.substr(temp_color.find_first_of(',')+1,std::string::npos);
+        int initBlue = (int)(stoi(temp_color.substr(0,temp_color.find_first_of(')'))));
+
+        PPM p(
+            imgName,
+            atoi((char *)gtk_entry_get_text(GTK_ENTRY(intensity_wdgt))), 
+            width,height,y*width+x,
+            atoi((char *)gtk_entry_get_text(GTK_ENTRY(rLow_wdgt))),
+            atoi((char *)gtk_entry_get_text(GTK_ENTRY(rHigh_wdgt))),
+            atoi((char *)gtk_entry_get_text(GTK_ENTRY(gLow_wdgt))),
+            atoi((char *)gtk_entry_get_text(GTK_ENTRY(gHigh_wdgt))),
+            atoi((char *)gtk_entry_get_text(GTK_ENTRY(bLow_wdgt))),
+            atoi((char *)gtk_entry_get_text(GTK_ENTRY(bHigh_wdgt))),
+            atoi((char *)gtk_entry_get_text(GTK_ENTRY(radius_wdgt))),
+            atoi((char *)gtk_entry_get_text(GTK_ENTRY(bias_wdgt))),
+            initRed,initGreen,initBlue);
+
+
         //Timer t;
-        Pixel **p = new Pixel*[width];
-        for(int i=0;i<width;i++){
-            p[i] = new Pixel[height];
-        }
-        
-        // its one big array of integers because poping is O(n);
-        std::vector<int> nxt; 
 
         //startPix(p,nxt,width,height,intensity,rRng,gRng,bRng,rOfst,gOfst,bOfst); //get user input on starting pixels and starts pixels;
 
-        std::ofstream ppm(imgName+".ppm");
-        ppm<<"P3 "<<width<<" "<<height<<" "<<intensity<<"\n";
+        std::ofstream ppm(p.name+".ppm");
+        ppm<<"P3 "<<p.width<<" "<<p.height<<" "<<p.intensity<<"\n";
 
         //random starting position
         bool last = false;
-        if(x == -1) {
-            x = rand()%width;
-            y = rand()%height;
+        if(p.pos <= -1) {
+            p.pos = rand()%width*height;
         }
-        locToPix(p,nxt,x,y,width,height,red,green,blue,intensity,rHigh,gHigh,bHigh,rLow,gLow,bLow);
+        p.locToPix();
         do {
-            if(nxt.empty()) //only happen when nxt has no more pixels that need to be colored.
+            if(p.nxt.empty()) //only happen when nxt has no more pixels that need to be colored.
                 last = true;
-            if(!nxt.empty()) {
-                int rando = rand()%nxt.size();
-                for(int i=0;i<bias;i++)
+            if(!p.nxt.empty()) {
+                int rando = rand()%p.nxt.size();
+                for(int i=0;i<p.bias;i++)
                     if(rando)
                         rando = rand()%rando;
-                numToPos(nxt[rando],x,y,width); //updates x and y to nxt[rando]
-                std::swap(nxt[rando],nxt[nxt.size()-1]);
-                nxt.pop_back();
+                std::swap(p.nxt[rando],p.nxt[p.nxt.size()-1]);
+                p.nxt.pop_back();
             }
-            locToPix(p,nxt,x,y,width,height,red,green,blue,intensity,rHigh,gHigh,bHigh,rLow,gLow,bLow);
+            p.locToPix();
         } while(!last);
 
         //printing arr p to ppm
-        for(int posY=0;posY<height;posY++) {
-            for (int posX=0;posX<width;posX++){
-                ppm <<p[posX][posY].r<<" "
-                    <<p[posX][posY].g<<" "
-                    <<p[posX][posY].b<<" \t";
-            }
-            ppm<<"\n";
+        for (int i = 0; i < p.width*p.height; i++){
+            ppm <<p.p[i].r<<" "
+                <<p.p[i].g<<" "
+                <<p.p[i].b<<" \t";
         }
-        gtk_label_set_text(GTK_LABEL(error_output),(imgName+" has been successfully generated").c_str());
+
+        gtk_label_set_text(GTK_LABEL(error_output),(p.name+" has been successfully generated").c_str());
     }
+    
     return;
 }
 
