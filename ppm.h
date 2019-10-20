@@ -16,30 +16,33 @@
 class PPM {
 public:
     std::string name;
-    int intensity;
-    int rLow,rHigh,gLow,gHigh,bLow,bHigh;
     int width,height;
-    int radius,bias;
-    int red,green,blue;
+    int intensity;
+    int bias;
     int pos = 0;
-    int colorcntr = 0;
     Pixel *p;
     std::vector<int> nxt; 
 
     PPM(const std::string &name, const int &intensity, const int &width, const int &height, const int &pos,
         const int &rLow, const int &rHigh, const int &gLow, const int &gHigh, const int &bLow, const int &bHigh,
-        const int &radius, const int &bias, const int &red, const int &green, const int &blue);
+        const int &color_radius, const int &growth_radius, const int &bias, const int &red, const int &green, const int &blue);
 
     ~PPM(){delete[] p;};
 
-    void locToPix();
+    void get_neighbor_color();
 private:
-    void nxtColor(const int &position);
+    int rLow,rHigh,gLow,gHigh,bLow,bHigh;
+    int growth_radius; //tiles within this radius up, down, left, and right will be added to the nxt array
+    int color_radius; //how many tiles out up, down, left, and right will be observed to avg color.
+    int init_red,init_green,init_blue,red,green,blue;
+    int colorcntr = 0;
+    void add_color(const int &position);
+    void add_neighbor(const int &position);
 };
 
 PPM::PPM(const std::string &name, const int &intensity, const int &width, const int &height, const int &pos,
         const int &rLow, const int &rHigh, const int &gLow, const int &gHigh, const int &bLow, const int &bHigh,
-        const int &radius, const int &bias, const int &red, const int &green, const int &blue) {
+        const int &color_radius, const int &growth_radius, const int &bias, const int &red, const int &green, const int &blue) {
     this->name = name;
     this->intensity = intensity;
     this->width = width;
@@ -51,78 +54,72 @@ PPM::PPM(const std::string &name, const int &intensity, const int &width, const 
     this->gHigh = gHigh - gLow + 1;
     this->bLow = bLow;
     this->gHigh = bHigh - bLow + 1;
-    this->radius = radius;
+    this->color_radius = color_radius; 
+    this->growth_radius = growth_radius; 
     this->bias = bias;
-    this->red = red / 255.0 * intensity;  //this converts the initial rgb to an rgb the a new intensity.
-    this->green = green / 255.0 * intensity;
-    this->blue = blue / 255.0 * intensity;
+    this->red = init_red = red / 255.0 * intensity;  //this converts the initial rgb to an rgb the a new intensity.
+    this->green = init_green =  green / 255.0 * intensity;
+    this->blue = init_blue = blue / 255.0 * intensity;
     p = new Pixel[width*height];
 }
 
-void PPM::locToPix() {
-    
-    bool left, up, down, right;
+//gets the mean avg of the tiles' colors within the radius of color_radius.
+//the init color will be choosen if there is no neighboring tiles within the growth radius to have color collected from
+void PPM::get_neighbor_color() {
     colorcntr = 0;
+    int left_radius, up_radius, down_radius, right_radius;
+    left_radius = up_radius = down_radius = right_radius = color_radius > growth_radius ? color_radius : growth_radius;
+    red = green = blue = 0;
+    //reduces the radii down within bounds of the picture if needed
+    while(pos%width-left_radius<0)left_radius--;
+    while(pos%width+right_radius>=width)right_radius--;
+    while(pos/width-up_radius<0)up_radius--;
+    while(pos/width+down_radius>=height)down_radius--;
 
-    //bool determining if the current pixel is within bounds
-    left = pos%width-1>=0;
-    right = pos%width+1<width;
-    up = pos/width-1>=0;
-    down = pos/width+1<height;
-
-    if(up && left)
-        nxtColor(pos-width-1);  
-    if(up)
-        nxtColor(pos-width);
-    if(up & right)
-        nxtColor(pos-width+1);   
-    if(left)
-        nxtColor(pos-1);  
-    if(right)
-        nxtColor(pos+1);  
-    if(down & left)
-        nxtColor(pos+width-1);  
-    if(down)
-        nxtColor(pos+width);  
-    if(down && right)
-        nxtColor(pos+width+1);  
+    //get color avgs around pixel and add neighbors to nxt
+    for(int y = 0-up_radius; y <= down_radius; y++) {
+        for(int x = 0-left_radius; x<= right_radius; x++) {
+            if(abs(x)<=growth_radius && abs(y)<=growth_radius) add_neighbor(pos+width*y+x);
+            if(abs(x)<=color_radius && abs(y)<=color_radius) add_color(pos+width*y+x);
+        }
+    }
     
-    //get color avgs around pixel
-    if(colorcntr){
+    if(colorcntr) {
         red = (red/colorcntr) + (rand()%rHigh+rLow);
         green = (green/colorcntr) + (rand()%gHigh+gLow);
         blue = (blue/colorcntr) + (rand()%bHigh+bLow);
     }
-    if(red > intensity)
-        red = intensity;
-    if(red < 0)
-        red = 0;
-    if(green > intensity)
-        green = intensity;
-    if(green < 0)
-        green = 0;
-    if(blue > intensity)
-        blue = intensity;
-    if(blue < 0)
-        blue = 0;
+    else {
+        red = init_red;
+        green = init_green;
 
+    }
+    //keeps the values for color within the bounds of the color spectrum
+    if(red > intensity) red = intensity;
+    if(red < 0) red = 0;
+    if(green > intensity) green = intensity;
+    if(green < 0) green = 0;
+    if(blue > intensity) blue = intensity;
+    if(blue < 0) blue = 0;
+    
     p[pos].setColor(red,green,blue);
-    red = green = blue = 0;
     return;
 }
 
-void PPM::nxtColor(const int &position){
-    if(p[position].r == -1){ //the color is -1 if the color has not been initialized for that individual pixel
-        if(p[position].g == -1) {  //if it has been added to nxt
-            nxt.push_back(position);
-            p[position].g = -2; ////flag to check if it has been added to nxt
-        }
-    }
-    else {
+void PPM::add_color(const int &position) {
+    if(p[position].r >= 0){ //the color is -1 if the color has not been initialized for that individual pixel
         red += p[position].r;
         green += p[position].g;
         blue += p[position].b;
         colorcntr++;
+    }
+    return;
+}
+
+void PPM::add_neighbor(const int &position) {
+    if(p[position].r == -1) {  //if it has been added to nxt
+        nxt.push_back(position);
+        p[position].r = -2; ////flag to check if it has been added to nxt
     }
     return;
 }

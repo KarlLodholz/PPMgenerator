@@ -7,7 +7,7 @@
 // compile with
 // c++ ppm.cpp -o ppm `pkg-config --cflags gtk+-3.0` `pkg-config --libs gtk+-3.0`
 
-static GtkWidget *imgName_wdgt,*width_wdgt,*height_wdgt,*intensity_wdgt,*rLow_wdgt,*rHigh_wdgt,*gLow_wdgt,*gHigh_wdgt,*bLow_wdgt,*bHigh_wdgt,*x_start,*y_start,*color_button,*bias_wdgt,*radius_wdgt,*error_output;
+static GtkWidget *imgName_wdgt,*width_wdgt,*height_wdgt,*intensity_wdgt,*rLow_wdgt,*rHigh_wdgt,*gLow_wdgt,*gHigh_wdgt,*bLow_wdgt,*bHigh_wdgt,*x_start,*y_start,*color_button,*bias_wdgt,*growth_radius_wdgt,*color_radius_wdgt,*error_output;
                
 void generate(GtkWidget *genBn, gpointer data) {
     
@@ -42,11 +42,11 @@ void generate(GtkWidget *genBn, gpointer data) {
         GdkRGBA *color = new GdkRGBA();
         gtk_color_chooser_get_rgba(GTK_COLOR_CHOOSER(color_button), color);
         std::string temp_color = gdk_rgba_to_string(color);
-        int initRed = (int)(stoi(temp_color.substr(temp_color.find_first_of('(')+1,temp_color.find_first_of(',')-temp_color.find_first_of('(')-1)));
+        int init_red = (int)(stoi(temp_color.substr(temp_color.find_first_of('(')+1,temp_color.find_first_of(',')-temp_color.find_first_of('(')-1)));
         temp_color = temp_color.substr(temp_color.find_first_of(',')+1,std::string::npos);
-        int initGreen = (int)(stoi(temp_color.substr(0,temp_color.find_first_of(','))));
+        int init_green = (int)(stoi(temp_color.substr(0,temp_color.find_first_of(','))));
         temp_color = temp_color.substr(temp_color.find_first_of(',')+1,std::string::npos);
-        int initBlue = (int)(stoi(temp_color.substr(0,temp_color.find_first_of(')'))));
+        int init_blue = (int)(stoi(temp_color.substr(0,temp_color.find_first_of(')'))));
 
         PPM p(
             imgName,
@@ -58,9 +58,10 @@ void generate(GtkWidget *genBn, gpointer data) {
             atoi((char *)gtk_entry_get_text(GTK_ENTRY(gHigh_wdgt))),
             atoi((char *)gtk_entry_get_text(GTK_ENTRY(bLow_wdgt))),
             atoi((char *)gtk_entry_get_text(GTK_ENTRY(bHigh_wdgt))),
-            atoi((char *)gtk_entry_get_text(GTK_ENTRY(radius_wdgt))),
+            atoi((char *)gtk_entry_get_text(GTK_ENTRY(color_radius_wdgt))),
+            atoi((char *)gtk_entry_get_text(GTK_ENTRY(color_radius_wdgt))),
             atoi((char *)gtk_entry_get_text(GTK_ENTRY(bias_wdgt))),
-            initRed,initGreen,initBlue);
+            init_red,init_green,init_blue);
 
 
         //Timer t;
@@ -75,8 +76,9 @@ void generate(GtkWidget *genBn, gpointer data) {
         if(p.pos <= -1) {
             p.pos = rand()%width*height;
         }
-        p.locToPix();
+        p.get_neighbor_color();
         do {
+            //for (int i = 0; i < p.width*p.height; i++) std::cout<<p.p[i].r<<" "<<p.p[i].g<<" "<<p.p[i].b<<" \t"; std::cout<<std::endl;
             if(p.nxt.empty()) //only happen when nxt has no more pixels that need to be colored.
                 last = true;
             if(!p.nxt.empty()) {
@@ -84,10 +86,11 @@ void generate(GtkWidget *genBn, gpointer data) {
                 for(int i=0;i<p.bias;i++)
                     if(rando)
                         rando = rand()%rando;
+                p.pos = p.nxt[rando];
                 std::swap(p.nxt[rando],p.nxt[p.nxt.size()-1]);
                 p.nxt.pop_back();
             }
-            p.locToPix();
+            p.get_neighbor_color();
         } while(!last);
 
         //printing arr p to ppm
@@ -192,12 +195,18 @@ int main(int argc, char **argv) {
     gtk_grid_attach(GTK_GRID(grid), color_label, 0, row, 1, 1);
     gtk_grid_attach(GTK_GRID(grid), color_button, 1, row++, 1, 1);
 
-    GtkWidget *radius_label = gtk_label_new("Radius: ");
+    GtkWidget *growth_bias_label = gtk_label_new("Growth Bias: ");
+    GtkWidget *growth_radius_label = gtk_label_new("Growth Radius: ");
+    GtkWidget *color_radius_label = gtk_label_new("Color Radius: ");
     bias_wdgt = gtk_entry_new_with_buffer(gtk_entry_buffer_new("0",1));
-    radius_wdgt = gtk_entry_new_with_buffer(gtk_entry_buffer_new("1",1));
-    gtk_grid_attach(GTK_GRID(grid), radius_label, 0, row,1,1);
-    gtk_grid_attach(GTK_GRID(grid), radius_wdgt, 1, row,1,1);
-    gtk_grid_attach(GTK_GRID(grid), bias_wdgt, 2, row++, 1, 1);
+    growth_radius_wdgt = gtk_entry_new_with_buffer(gtk_entry_buffer_new("1",1));
+    color_radius_wdgt = gtk_entry_new_with_buffer(gtk_entry_buffer_new("1",1));
+    gtk_grid_attach(GTK_GRID(grid), growth_radius_label, 0, row,1,1);
+    gtk_grid_attach(GTK_GRID(grid), growth_radius_wdgt, 1, row++,1,1);
+    gtk_grid_attach(GTK_GRID(grid), color_radius_label, 0, row,1,1);
+    gtk_grid_attach(GTK_GRID(grid), color_radius_wdgt, 1, row++,1,1);
+    gtk_grid_attach(GTK_GRID(grid), growth_bias_label,0, row, 1,1);
+    gtk_grid_attach(GTK_GRID(grid), bias_wdgt, 1, row++, 1, 1);
 
     GtkWidget *genBn = gtk_button_new_with_label("Generate");
     g_signal_connect(genBn, "clicked", G_CALLBACK(generate), NULL);
