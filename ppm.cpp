@@ -1,7 +1,7 @@
 #include "ppm.h"
 #include <gtk/gtk.h>
 #include <gdk/gdk.h>
-
+#include "timer.h"
 //#include "timer.h"
 
 // compile with
@@ -59,12 +59,12 @@ void generate(GtkWidget *genBn, gpointer data) {
             atoi((char *)gtk_entry_get_text(GTK_ENTRY(bLow_wdgt))),
             atoi((char *)gtk_entry_get_text(GTK_ENTRY(bHigh_wdgt))),
             atoi((char *)gtk_entry_get_text(GTK_ENTRY(color_radius_wdgt))),
-            atoi((char *)gtk_entry_get_text(GTK_ENTRY(color_radius_wdgt))),
+            atoi((char *)gtk_entry_get_text(GTK_ENTRY(growth_radius_wdgt))),
             atoi((char *)gtk_entry_get_text(GTK_ENTRY(bias_wdgt))),
             init_red,init_green,init_blue);
 
 
-        //Timer t;
+        Timer t;
 
         //startPix(p,nxt,width,height,intensity,rRng,gRng,bRng,rOfst,gOfst,bOfst); //get user input on starting pixels and starts pixels;
 
@@ -74,7 +74,7 @@ void generate(GtkWidget *genBn, gpointer data) {
         //random starting position
         bool last = false;
         if(p.pos <= -1) {
-            p.pos = rand()%width*height;
+            p.pos = rand()%(width*height);
         }
         p.get_neighbor_color();
         do {

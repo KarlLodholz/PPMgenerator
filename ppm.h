@@ -53,13 +53,13 @@ PPM::PPM(const std::string &name, const int &intensity, const int &width, const 
     this->gLow = gLow;
     this->gHigh = gHigh - gLow + 1;
     this->bLow = bLow;
-    this->gHigh = bHigh - bLow + 1;
+    this->bHigh = bHigh - bLow + 1;
     this->color_radius = color_radius; 
     this->growth_radius = growth_radius; 
     this->bias = bias;
-    this->red = init_red = red / 255.0 * intensity;  //this converts the initial rgb to an rgb the a new intensity.
-    this->green = init_green =  green / 255.0 * intensity;
-    this->blue = init_blue = blue / 255.0 * intensity;
+    this->init_red = red / 255.0 * intensity;  //this converts the initial rgb to an rgb the a new intensity.
+    this->init_green =  green / 255.0 * intensity;
+    this->init_blue = blue / 255.0 * intensity;
     p = new Pixel[width*height];
 }
 
@@ -68,7 +68,8 @@ PPM::PPM(const std::string &name, const int &intensity, const int &width, const 
 void PPM::get_neighbor_color() {
     colorcntr = 0;
     int left_radius, up_radius, down_radius, right_radius;
-    left_radius = up_radius = down_radius = right_radius = color_radius > growth_radius ? color_radius : growth_radius;
+    left_radius = up_radius = down_radius = right_radius = (color_radius>=growth_radius?color_radius:growth_radius);
+    //std::cout<<left_radius<<"  "<<color_radius<<"  "<<growth_radius<<std::endl;
     red = green = blue = 0;
     //reduces the radii down within bounds of the picture if needed
     while(pos%width-left_radius<0)left_radius--;
@@ -92,6 +93,7 @@ void PPM::get_neighbor_color() {
     else {
         red = init_red;
         green = init_green;
+        blue = init_blue;
 
     }
     //keeps the values for color within the bounds of the color spectrum
