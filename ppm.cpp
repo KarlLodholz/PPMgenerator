@@ -2,10 +2,14 @@
 #include <gtk/gtk.h>
 #include <gdk/gdk.h>
 #include "timer.h"
-//#include "timer.h"
 
 // compile with
 // c++ ppm.cpp -o ppm `pkg-config --cflags gtk+-3.0` `pkg-config --libs gtk+-3.0`
+
+//////////////////////////////////////////  -TO DO-  /////////////////////////////////////////////
+//cap range for how much each color can change max outside of the random aspect
+//look into animation of a picture
+//////////////////////////////////////////////////////////////////////////////////////////////////
 
 static GtkWidget *imgName_wdgt,*width_wdgt,*height_wdgt,*intensity_wdgt,*rLow_wdgt,*rHigh_wdgt,*gLow_wdgt,*gHigh_wdgt,*bLow_wdgt,*bHigh_wdgt,*x_start,*y_start,*color_button,*bias_wdgt,*growth_radius_wdgt,*color_radius_wdgt,*error_output;
                
@@ -66,8 +70,6 @@ void generate(GtkWidget *genBn, gpointer data) {
 
         Timer t;
 
-        //startPix(p,nxt,width,height,intensity,rRng,gRng,bRng,rOfst,gOfst,bOfst); //get user input on starting pixels and starts pixels;
-
         std::ofstream ppm(p.name+".ppm");
         ppm<<"P3 "<<p.width<<" "<<p.height<<" "<<p.intensity<<"\n";
 
@@ -76,6 +78,7 @@ void generate(GtkWidget *genBn, gpointer data) {
         if(p.pos <= -1) {
             p.pos = rand()%(width*height);
         }
+        p.init_pos = p.pos;
         p.get_neighbor_color();
         do {
             //for (int i = 0; i < p.width*p.height; i++) std::cout<<p.p[i].r<<" "<<p.p[i].g<<" "<<p.p[i].b<<" \t"; std::cout<<std::endl;
@@ -100,6 +103,20 @@ void generate(GtkWidget *genBn, gpointer data) {
                 <<p.p[i].b<<" \t";
         }
 
+        //settings file
+        std::ofstream ppm_settings(p.name+".txt");
+        ppm_settings<<"//settings"
+            <<"\nname:"<<p.name
+            <<"\ndimensions:"<<p.width<<" "<<p.height
+            <<"\nintensity:"<<p.intensity
+            <<"\nrH-rL:"<<p.get_rHigh()<<" "<<p.get_rLow()
+            <<"\ngH-gL:"<<p.get_gHigh()<<" "<<p.get_gLow()
+            <<"\nbH-bL:"<<p.get_bHigh()<<" "<<p.get_bLow()
+            <<"\ninit_pos:"<<p.init_pos%p.width<<" "<<p.init_pos/p.width
+            <<"\ninit_color:"<<p.get_init_red()<<" "<<p.get_init_green()<<" "<<p.get_init_blue()
+            <<"\ncolor_radius:"<<p.get_color_radius()
+            <<"\ngrowth_bias:"<<p.get_growth_bias();
+
         gtk_label_set_text(GTK_LABEL(error_output),(p.name+" has been successfully generated").c_str());
     }
     
@@ -118,7 +135,7 @@ int main(int argc, char **argv) {
     gtk_container_add(GTK_CONTAINER(window), grid);
 
     GtkWidget *imgName_wdgt_label = gtk_label_new("Image Name:");
-    imgName_wdgt = gtk_entry_new();
+    imgName_wdgt = gtk_entry_new_with_buffer(gtk_entry_buffer_new("test",4));
     gtk_grid_attach(GTK_GRID(grid), imgName_wdgt_label, 0, row, 1, 1);
     gtk_grid_attach(GTK_GRID(grid), imgName_wdgt, 1, row++, 1, 1);
 
@@ -126,8 +143,8 @@ int main(int argc, char **argv) {
     gtk_grid_attach(GTK_GRID(grid), space0, 0, row++, 1, 1);
 
     GtkWidget *demensions_label = gtk_label_new("Dimensions  (Width,Height): ");
-    width_wdgt = gtk_entry_new();
-    height_wdgt = gtk_entry_new();
+    width_wdgt = gtk_entry_new_with_buffer(gtk_entry_buffer_new("1920",4));
+    height_wdgt = gtk_entry_new_with_buffer(gtk_entry_buffer_new("1080",4));
     gtk_grid_attach(GTK_GRID(grid), demensions_label, 0, row, 1, 1);
     gtk_grid_attach(GTK_GRID(grid), width_wdgt, 1, row, 1, 1);
     gtk_grid_attach(GTK_GRID(grid), height_wdgt, 2, row++, 1, 1);

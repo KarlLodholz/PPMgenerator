@@ -16,7 +16,7 @@
 class PPM {
 public:
     std::string name;
-    int width,height;
+    int width,height,init_pos;
     int intensity;
     int bias;
     int pos = 0;
@@ -30,6 +30,21 @@ public:
     ~PPM(){delete[] p;};
 
     void get_neighbor_color();
+
+    //get functions
+    //rHigh, gHigh, & bHigh are changed here and when called in the constructor function to avaoid excessive calculations
+    const int get_rHigh() {return rHigh+rLow-1;};
+    const int get_gHigh() {return gHigh+gLow-1;};
+    const int get_bHigh() {return bHigh+bLow-1;};
+    const int get_rLow() {return rLow;};
+    const int get_gLow() {return gLow;};
+    const int get_bLow() {return bLow;};
+    const int get_init_red() {return init_red;};
+    const int get_init_green() {return init_green;};
+    const int get_init_blue() {return init_blue;};
+    const int get_color_radius() {return color_radius;};
+    const int get_growth_bias() {return growth_radius;};
+
 private:
     int rLow,rHigh,gLow,gHigh,bLow,bHigh;
     int growth_radius; //tiles within this radius up, down, left, and right will be added to the nxt array
@@ -40,6 +55,7 @@ private:
     void add_neighbor(const int &position);
 };
 
+//constructor
 PPM::PPM(const std::string &name, const int &intensity, const int &width, const int &height, const int &pos,
         const int &rLow, const int &rHigh, const int &gLow, const int &gHigh, const int &bLow, const int &bHigh,
         const int &color_radius, const int &growth_radius, const int &bias, const int &red, const int &green, const int &blue) {
@@ -49,6 +65,7 @@ PPM::PPM(const std::string &name, const int &intensity, const int &width, const 
     this->height = height;
     this->pos = pos;
     this->rLow = rLow;
+    //rHigh, gHigh, & bHigh are changed here and when called in the get_function to avaoid excessive calculations
     this->rHigh = rHigh - rLow + 1;
     this->gLow = gLow;
     this->gHigh = gHigh - gLow + 1;
