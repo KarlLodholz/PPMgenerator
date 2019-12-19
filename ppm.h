@@ -25,6 +25,7 @@ public:
 
     PPM(const std::string &name, const int &intensity, const int &width, const int &height, const int &pos,
         const int &rLow, const int &rHigh, const int &gLow, const int &gHigh, const int &bLow, const int &bHigh,
+        const int &rCeiling, const int &rFloor,const int &gCeiling, const int &gFloor,const int &bCeiling, const int &bFloor,
         const int &color_radius, const int &growth_radius, const int &bias, const int &red, const int &green, const int &blue);
 
     ~PPM(){delete[] p;};
@@ -44,9 +45,16 @@ public:
     const int get_init_blue() {return init_blue;};
     const int get_color_radius() {return color_radius;};
     const int get_growth_bias() {return growth_radius;};
+    const int get_rFloor() {return rFloor;};
+    const int get_rCeiling() {return rCeiling;};
+    const int get_gFloor() {return gFloor;};
+    const int get_gCeiling() {return gCeiling;};
+    const int get_bFloor() {return bFloor;};
+    const int get_bCeiling() {return bCeiling;};
 
 private:
     int rLow,rHigh,gLow,gHigh,bLow,bHigh;
+    int rCeiling,rFloor,gCeiling,gFloor,bCeiling,bFloor;
     int growth_radius; //tiles within this radius up, down, left, and right will be added to the nxt array
     int color_radius; //how many tiles out up, down, left, and right will be observed to avg color.
     int init_red,init_green,init_blue,red,green,blue;
@@ -58,6 +66,7 @@ private:
 //constructor
 PPM::PPM(const std::string &name, const int &intensity, const int &width, const int &height, const int &pos,
         const int &rLow, const int &rHigh, const int &gLow, const int &gHigh, const int &bLow, const int &bHigh,
+        const int &rCeiling, const int &rFloor,const int &gCeiling, const int &gFloor,const int &bCeiling, const int &bFloor,
         const int &color_radius, const int &growth_radius, const int &bias, const int &red, const int &green, const int &blue) {
     this->name = name;
     this->intensity = intensity;
@@ -71,6 +80,12 @@ PPM::PPM(const std::string &name, const int &intensity, const int &width, const 
     this->gHigh = gHigh - gLow + 1;
     this->bLow = bLow;
     this->bHigh = bHigh - bLow + 1;
+    this->rCeiling = rCeiling;
+    this->rFloor = rFloor;
+    this->gCeiling = gCeiling;
+    this->gFloor = gFloor;
+    this->bCeiling = bCeiling;
+    this->bFloor = bFloor;
     this->color_radius = color_radius; 
     this->growth_radius = growth_radius; 
     this->bias = bias;
@@ -114,12 +129,12 @@ void PPM::get_neighbor_color() {
 
     }
     //keeps the values for color within the bounds of the color spectrum
-    if(red > intensity) red = intensity;
-    if(red < 0) red = 0;
-    if(green > intensity) green = intensity;
-    if(green < 0) green = 0;
-    if(blue > intensity) blue = intensity;
-    if(blue < 0) blue = 0;
+    if(red > rCeiling) red = rCeiling;
+    if(red < rFloor) red = rFloor;
+    if(green > gCeiling) green = gCeiling;
+    if(green < gFloor) green = gFloor;
+    if(blue > bCeiling) blue = bCeiling;
+    if(blue < bFloor) blue = bFloor;
     
     p[pos].setColor(red,green,blue);
     return;

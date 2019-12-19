@@ -11,7 +11,7 @@
 //look into animation of a picture
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
-static GtkWidget *imgName_wdgt,*width_wdgt,*height_wdgt,*intensity_wdgt,*rLow_wdgt,*rHigh_wdgt,*gLow_wdgt,*gHigh_wdgt,*bLow_wdgt,*bHigh_wdgt,*x_start,*y_start,*color_button,*bias_wdgt,*growth_radius_wdgt,*color_radius_wdgt,*error_output;
+static GtkWidget *imgName_wdgt,*width_wdgt,*height_wdgt,*intensity_wdgt,*rLow_wdgt,*rHigh_wdgt,*gLow_wdgt,*gHigh_wdgt,*bLow_wdgt,*bHigh_wdgt,*rFloor_wdgt,*rCeiling_wdgt,*gFloor_wdgt,*gCeiling_wdgt,*bFloor_wdgt,*bCeiling_wdgt,*x_start,*y_start,*color_button,*bias_wdgt,*growth_radius_wdgt,*color_radius_wdgt,*error_output;
                
 void generate(GtkWidget *genBn, gpointer data) {
     
@@ -62,6 +62,12 @@ void generate(GtkWidget *genBn, gpointer data) {
             atoi((char *)gtk_entry_get_text(GTK_ENTRY(gHigh_wdgt))),
             atoi((char *)gtk_entry_get_text(GTK_ENTRY(bLow_wdgt))),
             atoi((char *)gtk_entry_get_text(GTK_ENTRY(bHigh_wdgt))),
+            atoi((char *)gtk_entry_get_text(GTK_ENTRY(rCeiling_wdgt))),
+            atoi((char *)gtk_entry_get_text(GTK_ENTRY(rFloor_wdgt))),
+            atoi((char *)gtk_entry_get_text(GTK_ENTRY(gCeiling_wdgt))),
+            atoi((char *)gtk_entry_get_text(GTK_ENTRY(gFloor_wdgt))),
+            atoi((char *)gtk_entry_get_text(GTK_ENTRY(bCeiling_wdgt))),
+            atoi((char *)gtk_entry_get_text(GTK_ENTRY(bFloor_wdgt))),
             atoi((char *)gtk_entry_get_text(GTK_ENTRY(color_radius_wdgt))),
             atoi((char *)gtk_entry_get_text(GTK_ENTRY(growth_radius_wdgt))),
             atoi((char *)gtk_entry_get_text(GTK_ENTRY(bias_wdgt))),
@@ -112,6 +118,9 @@ void generate(GtkWidget *genBn, gpointer data) {
             <<"\nrH-rL:"<<p.get_rHigh()<<" "<<p.get_rLow()
             <<"\ngH-gL:"<<p.get_gHigh()<<" "<<p.get_gLow()
             <<"\nbH-bL:"<<p.get_bHigh()<<" "<<p.get_bLow()
+            <<"\nrF-rC:"<<p.get_rFloor()<<" "<<p.get_rCeiling()
+            <<"\ngF-gC:"<<p.get_gFloor()<<" "<<p.get_gCeiling()
+            <<"\nbF-bC:"<<p.get_bFloor()<<" "<<p.get_bCeiling()
             <<"\ninit_pos:"<<p.init_pos%p.width<<" "<<p.init_pos/p.width
             <<"\ninit_color:"<<p.get_init_red()<<" "<<p.get_init_green()<<" "<<p.get_init_blue()
             <<"\ncolor_radius:"<<p.get_color_radius()
@@ -192,6 +201,34 @@ int main(int argc, char **argv) {
 
     GtkWidget *space3 = gtk_label_new(" ");
     gtk_grid_attach(GTK_GRID(grid), space3, 0, row++, 1, 1);
+    
+    GtkWidget *color_max_min_label_pt0 = gtk_label_new("Color Floors & Ceilings");
+    GtkWidget *color_max_min_label_pt1 = gtk_label_new("(floor, ceiling)");
+    GtkWidget *color_max_min_label_pt2 = gtk_label_new("between 0 and 255");
+    GtkWidget *color_max_min_red_label = gtk_label_new("Red:");
+    rFloor_wdgt = gtk_entry_new_with_buffer(gtk_entry_buffer_new("0",1));
+    rCeiling_wdgt = gtk_entry_new_with_buffer(gtk_entry_buffer_new("255",3));
+    GtkWidget *color_max_min_green_label = gtk_label_new("Green:");
+    gFloor_wdgt = gtk_entry_new_with_buffer(gtk_entry_buffer_new("0",1));
+    gCeiling_wdgt = gtk_entry_new_with_buffer(gtk_entry_buffer_new("255",3));
+    GtkWidget *color_max_min_blue_label = gtk_label_new("Blue:");
+    bFloor_wdgt = gtk_entry_new_with_buffer(gtk_entry_buffer_new("0",1));
+    bCeiling_wdgt = gtk_entry_new_with_buffer(gtk_entry_buffer_new("255",3));
+    gtk_grid_attach(GTK_GRID(grid), color_max_min_label_pt0, 0, row, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), color_max_min_label_pt1, 1, row, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), color_max_min_label_pt2, 2, row++, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), color_max_min_red_label, 0, row, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), rFloor_wdgt, 1, row, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), rCeiling_wdgt, 2, row++, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), color_max_min_green_label, 0, row, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), gFloor_wdgt, 1, row, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), gCeiling_wdgt, 2, row++, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), color_max_min_blue_label, 0, row, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), bFloor_wdgt, 1, row, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), bCeiling_wdgt, 2, row++, 1, 1);
+
+    GtkWidget *space4 = gtk_label_new(" ");
+    gtk_grid_attach(GTK_GRID(grid), space4, 0, row++, 1, 1);
 
     GtkWidget *starting_pnt_label_pt0 = gtk_label_new("Starting location");
     GtkWidget *starting_pnt_label_pt1 = gtk_label_new("-1 for random location");
@@ -204,20 +241,20 @@ int main(int argc, char **argv) {
     gtk_grid_attach(GTK_GRID(grid), x_start, 1, row, 1, 1);
     gtk_grid_attach(GTK_GRID(grid), y_start, 2, row++, 1, 1);
 
-    GtkWidget *space4 = gtk_label_new(" ");
-    gtk_grid_attach(GTK_GRID(grid), space3, 0, row++, 1, 1);
+    GtkWidget *space5 = gtk_label_new(" ");
+    gtk_grid_attach(GTK_GRID(grid), space5, 0, row++, 1, 1);
 
     GtkWidget *color_label = gtk_label_new("Starting color: ");
-    color_button = gtk_color_button_new();
-    gtk_grid_attach(GTK_GRID(grid), color_label, 0, row, 1, 1);
-    gtk_grid_attach(GTK_GRID(grid), color_button, 1, row++, 1, 1);
-
     GtkWidget *growth_bias_label = gtk_label_new("Growth Bias: ");
     GtkWidget *growth_radius_label = gtk_label_new("Growth Radius: ");
     GtkWidget *color_radius_label = gtk_label_new("Color Radius: ");
+    color_button = gtk_color_button_new();
+
     bias_wdgt = gtk_entry_new_with_buffer(gtk_entry_buffer_new("0",1));
     growth_radius_wdgt = gtk_entry_new_with_buffer(gtk_entry_buffer_new("1",1));
     color_radius_wdgt = gtk_entry_new_with_buffer(gtk_entry_buffer_new("1",1));
+    gtk_grid_attach(GTK_GRID(grid), color_label, 0, row, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), color_button, 1, row++, 1, 1);
     gtk_grid_attach(GTK_GRID(grid), growth_radius_label, 0, row,1,1);
     gtk_grid_attach(GTK_GRID(grid), growth_radius_wdgt, 1, row++,1,1);
     gtk_grid_attach(GTK_GRID(grid), color_radius_label, 0, row,1,1);
