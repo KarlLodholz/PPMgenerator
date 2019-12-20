@@ -7,7 +7,6 @@
 // c++ ppm.cpp -o ppm `pkg-config --cflags gtk+-3.0` `pkg-config --libs gtk+-3.0`
 
 //////////////////////////////////////////  -TO DO-  /////////////////////////////////////////////
-//cap range for how much each color can change max outside of the random aspect
 //look into animation of a picture
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -115,9 +114,9 @@ void generate(GtkWidget *genBn, gpointer data) {
             <<"\nname:"<<p.name
             <<"\ndimensions:"<<p.width<<" "<<p.height
             <<"\nintensity:"<<p.intensity
-            <<"\nrH-rL:"<<p.get_rHigh()<<" "<<p.get_rLow()
-            <<"\ngH-gL:"<<p.get_gHigh()<<" "<<p.get_gLow()
-            <<"\nbH-bL:"<<p.get_bHigh()<<" "<<p.get_bLow()
+            <<"\nrL-rH:"<<p.get_rLow()<<" "<<p.get_rHigh()
+            <<"\ngL-gH:"<<p.get_gLow()<<" "<<p.get_gHigh()
+            <<"\nbL-bH:"<<p.get_bLow()<<" "<<p.get_bHigh()
             <<"\nrF-rC:"<<p.get_rFloor()<<" "<<p.get_rCeiling()
             <<"\ngF-gC:"<<p.get_gFloor()<<" "<<p.get_gCeiling()
             <<"\nbF-bC:"<<p.get_bFloor()<<" "<<p.get_bCeiling()

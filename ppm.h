@@ -40,17 +40,17 @@ public:
     const int get_rLow() {return rLow;};
     const int get_gLow() {return gLow;};
     const int get_bLow() {return bLow;};
-    const int get_init_red() {return init_red;};
-    const int get_init_green() {return init_green;};
-    const int get_init_blue() {return init_blue;};
+    const int get_init_red() {return init_red/(float)intensity*255;};
+    const int get_init_green() {return init_green/(float)intensity*255;};
+    const int get_init_blue() {return init_blue/(float)intensity*255;};
     const int get_color_radius() {return color_radius;};
     const int get_growth_bias() {return growth_radius;};
-    const int get_rFloor() {return rFloor;};
-    const int get_rCeiling() {return rCeiling;};
-    const int get_gFloor() {return gFloor;};
-    const int get_gCeiling() {return gCeiling;};
-    const int get_bFloor() {return bFloor;};
-    const int get_bCeiling() {return bCeiling;};
+    const int get_rFloor() {return rFloor/(float)intensity*255;};
+    const int get_rCeiling() {return rCeiling/(float)intensity*255;};
+    const int get_gFloor() {return gFloor/(float)intensity*255;};
+    const int get_gCeiling() {return gCeiling/(float)intensity*255;};
+    const int get_bFloor() {return bFloor/(float)intensity*255;};
+    const int get_bCeiling() {return bCeiling/(float)intensity*255;};
 
 private:
     int rLow,rHigh,gLow,gHigh,bLow,bHigh;
@@ -80,12 +80,13 @@ PPM::PPM(const std::string &name, const int &intensity, const int &width, const 
     this->gHigh = gHigh - gLow + 1;
     this->bLow = bLow;
     this->bHigh = bHigh - bLow + 1;
-    this->rCeiling = rCeiling;
-    this->rFloor = rFloor;
-    this->gCeiling = gCeiling;
-    this->gFloor = gFloor;
-    this->bCeiling = bCeiling;
-    this->bFloor = bFloor;
+    //the ceilings and floors are adjusted here and in the get function to avoid excessive calculations
+    this->rCeiling = (int)(rCeiling/255.0*intensity);
+    this->rFloor = (int)(rFloor/255.0*intensity);
+    this->gCeiling = (int)(gCeiling/255.0*intensity);
+    this->gFloor = (int)(gFloor/255.0*intensity);
+    this->bCeiling = (int)(bCeiling/255.0*intensity);
+    this->bFloor = (int)(bFloor/255.0*intensity);
     this->color_radius = color_radius; 
     this->growth_radius = growth_radius; 
     this->bias = bias;
