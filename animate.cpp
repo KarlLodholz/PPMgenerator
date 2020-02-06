@@ -38,18 +38,22 @@ int main() {
 
     float diff_inc;
     float color_num;
-    for(int i=0; i<frames[0].size(); i++) {
+    std::cout<<frames[0].size()<<std::endl;
+    for(int i=1; i<frames[0].size()-1; i++) {
+        //std::cout<<i<<std::endl;
         diff_inc = (frames[0][i] - frames[num_frames-1][i])/(float)num_frames;
         color_num = frames[0][i];
         for(int j=1; j<num_frames-1; j++) {
             color_num += diff_inc;
-            frames[j][i] = (int)color_num;
+            frames[j].push_back((int)color_num);
         }
     }
 
+    std::cout<<"hi"<<std::endl;
+
     std::ofstream p;
     for(int i=0; i<num_frames;i+=3) {
-        p.open(i+"_"+root_name+".ppm");
+        p.open(root_name+"_"+std::to_string(i)+".ppm");
         p<<data0;
         for(int j=0; j<frames[0].size(); j++) {
             p<<frames[i][j]+" ";
