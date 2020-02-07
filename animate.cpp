@@ -58,8 +58,9 @@ int main() {
     }
 
     std::ofstream p;
+    std::system(("mkdir "+root_name).c_str());
     for(int i=0; i<num_frames;i++) {
-        p.open(root_name+"_"+std::to_string(i)+".ppm");
+        p.open(root_name+"/"+root_name+"_"+std::to_string(i)+".ppm");
         p<<data0<<"\n";
         for(int j=0; j<frames[0].size(); j+=3) {
             p<<frames[i][j]<<' ';
@@ -68,6 +69,19 @@ int main() {
         }
         p.close();
     }
+    //reloop files
+    for(int i=0; i<num_frames;i++) {
+        p.open(root_name+"/"+root_name+"_"+std::to_string(i+num_frames)+".ppm");
+        p<<data0<<"\n";
+        for(int j=0; j<frames[0].size(); j+=3) {
+            p<<frames[num_frames-i-1][j]<<' ';
+            p<<frames[num_frames-i-1][j+1]<<' ';
+            p<<frames[num_frames-i-1][j+2]<<"\t";
+        }
+        p.close();
+    }
+
+    std::system(("convert -delay 5 -loop 0 "+root_name+"/*.ppm "+root_name+"/"+root_name+".gif").c_str());
 
     return 0;
 }   
