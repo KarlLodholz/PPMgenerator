@@ -4,6 +4,7 @@ int main() {
 
     std::string f0,f1,root_name,data0,data1;
     int num_frames,clr_data,x0,x1,y0,y1,int0,int1;
+    bool delete_files;
     std::cout<<"file start: ";
     std::cin>>f0;
     std::cout<<"file end: ";
@@ -12,6 +13,8 @@ int main() {
     std::cin>>root_name;
     std::cout<<"num frames: ";
     std::cin>>num_frames;
+    std::cout<<"delete files? (0:no , 1:yes): ";
+    std::cin>>delete_files;
 
     //read files and store their data in arrays
     std::vector<std::vector<int> > frames;
@@ -70,7 +73,7 @@ int main() {
         p.close();
     }
     //reloop files
-    for(int i=0; i<num_frames;i++) {
+    for(int i=1; i<num_frames-1;i++) {
         p.open(root_name+"/"+root_name+"_"+std::to_string(i+num_frames)+".ppm");
         p<<data0<<"\n";
         for(int j=0; j<frames[0].size(); j+=3) {
@@ -81,7 +84,10 @@ int main() {
         p.close();
     }
 
+
     std::system(("convert -delay 5 -loop 0 "+root_name+"/*.ppm "+root_name+"/"+root_name+".gif").c_str());
+
+    if(delete_files) std::system(("rm "+root_name+"/*.ppm").c_str());
 
     return 0;
 }   
