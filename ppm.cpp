@@ -7,7 +7,10 @@
 // c++ ppm.cpp -o ppm `pkg-config --cflags gtk+-3.0` `pkg-config --libs gtk+-3.0`
 
 //////////////////////////////////////////  -TO DO-  /////////////////////////////////////////////
-//look into animation of a picture
+//animation a single ppm
+//add preview function in menu
+//add animation button of multiple ppms
+//look into adding a multiple menu option 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 static GtkWidget *imgName_wdgt,*width_wdgt,*height_wdgt,*intensity_wdgt,*rLow_wdgt,*rHigh_wdgt,*gLow_wdgt,*gHigh_wdgt,*bLow_wdgt,*bHigh_wdgt,*rFloor_wdgt,*rCeiling_wdgt,*gFloor_wdgt,*gCeiling_wdgt,*bFloor_wdgt,*bCeiling_wdgt,*x_start,*y_start,*color_button,*bias_wdgt,*growth_radius_wdgt,*color_radius_wdgt,*error_output;
