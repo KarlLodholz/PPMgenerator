@@ -3,7 +3,7 @@
 int main() {
 
     std::string f0,f1,root_name,data0,data1;
-    int num_frames,clr_data,x0,x1,y0,y1,int0,int1;
+    int num_frames,clr_data,x0,x1,y0,y1,int0,int1,ms;
     bool delete_files;
     std::cout<<"file start: ";
     std::cin>>f0;
@@ -13,6 +13,8 @@ int main() {
     std::cin>>root_name;
     std::cout<<"num frames: ";
     std::cin>>num_frames;
+    std::cout<<"ms per frame: ";
+    std::cin>>ms;
     std::cout<<"delete files? (0:no , 1:yes): ";
     std::cin>>delete_files;
 
@@ -85,7 +87,7 @@ int main() {
     }
 
 
-    std::system(("convert -delay 5 -loop 0 "+root_name+"/*.ppm "+root_name+"/"+root_name+".gif").c_str());
+    std::system(("convert -delay "+std::to_string(ms)+" -loop 0 "+root_name+"/*.ppm "+root_name+"/"+root_name+".gif").c_str());
 
     if(delete_files) std::system(("rm "+root_name+"/*.ppm").c_str());
 
